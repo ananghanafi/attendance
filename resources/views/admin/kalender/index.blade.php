@@ -266,7 +266,6 @@
         pickModeStart.classList.toggle('primary', mode === 'start');
         pickModeEnd.classList.toggle('primary', mode === 'end');
 
-        // Visual cue pada input yang sedang aktif
         const activeShadow = '0 0 0 3px rgba(89,102,247,0.10)';
         const inactiveShadow = '';
         const activeBorder = '1px solid rgba(89,102,247,0.55)';
