@@ -61,7 +61,6 @@ class AdminKalenderKerjaController extends Controller
             'periode' => sprintf('Minggu %d', $data['minggu']),
             'tgl_awal' => $data['tgl_awal'],
             'tgl_akhir' => $data['tgl_akhir'],
-        // dua format buat jaga jaga biar kompatibel sama data lama
             'persentase_decimal' => (float) $data['wfo_maks'],
             'persentase' => (float) $data['wfo_maks'],
             'kalender' => $kalenderDb,
