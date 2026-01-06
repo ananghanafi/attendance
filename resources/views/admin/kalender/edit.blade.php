@@ -67,7 +67,8 @@
               @php
                 $wfoVal = $row->persentase_decimal;
                 if ($wfoVal === null && $row->persentase !== null) {
-                  $wfoVal = $row->persentase * 100;
+                  // sekarang persentase disimpan sudah dalam satuan persen
+                  $wfoVal = $row->persentase;
                 }
               @endphp
               <input type="number" id="wfo_maks" name="wfo_maks" min="0" max="100" step="0.01" required value="{{ $wfoVal }}">

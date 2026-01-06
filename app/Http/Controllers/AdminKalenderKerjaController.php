@@ -45,26 +45,31 @@ class AdminKalenderKerjaController extends Controller
             'tgl_akhir.after_or_equal' => 'Tanggal akhir harus lebih besar atau sama dengan tanggal awal.',
         ]);
 
-    // Kolom DB "kalender" => format: minggu-bulan-tahun (contoh: 1-1-2026)
-    $kalenderDb = sprintf('%d-%d-%d', $data['minggu'], $data['bulan'], $data['tahun']);
+        $kalenderDb = sprintf('%d-%d-%d', $data['minggu'], $data['bulan'], $data['tahun']);
 
-    // Untuk tampilan di UI (kolom judul)
-    $judulText = sprintf('Minggu ke-%d, %02d/%d', $data['minggu'], $data['bulan'], $data['tahun']);
+        $judulText = sprintf('Minggu ke-%d, %02d/%d', $data['minggu'], $data['bulan'], $data['tahun']);
+
+        // block tanggal duplikat, based minggu+bulan+tahun
+        $exists = KalenderKerjaV2::query()->where('kalender', $kalenderDb)->exists();
+        if ($exists) {
+            return back()
+                ->withErrors(['kalender' => "Data untuk {$judulText} sudah ada."])
+                ->withInput();
+        }
 
         KalenderKerjaV2::create([
             'periode' => sprintf('Minggu %d', $data['minggu']),
             'tgl_awal' => $data['tgl_awal'],
             'tgl_akhir' => $data['tgl_akhir'],
-        // Simpan dua format untuk jaga-jaga kompatibilitas data lama:
+        // dua format buat jaga jaga biar kompatibel sama data lama
             'persentase_decimal' => (float) $data['wfo_maks'],
-            'persentase' => ((float) $data['wfo_maks']) / 100.0,
-            // kolom "kalender" wajib terisi tapi tidak perlu ditampilkan di UI
+            'persentase' => (float) $data['wfo_maks'],
             'kalender' => $kalenderDb,
             'judul' => $judulText,
             'active' => false,
         ]);
 
-        // data maks 10
+        // data tanggal maks 10
         $count = KalenderKerjaV2::query()->count();
         if ($count > 10) {
             $toDelete = $count - 10;
@@ -74,7 +79,7 @@ class AdminKalenderKerjaController extends Controller
                 ->delete();
         }
 
-        return redirect()->route('admin.kalender')->with('status', 'Data kalender kerja berhasil disimpan (dummy).');
+        return redirect()->route('admin.kalender')->with('status', 'Data kalender kerja berhasil disimpan.');
     }
 
     public function edit(int $id)
@@ -103,18 +108,28 @@ class AdminKalenderKerjaController extends Controller
             'tgl_akhir.after_or_equal' => 'Tanggal akhir harus lebih besar atau sama dengan tanggal awal.',
         ]);
 
-    // Kolom DB "kalender" => format: minggu-bulan-tahun (contoh: 2-1-2026)
-    $kalenderDb = sprintf('%d-%d-%d', $data['minggu'], $data['bulan'], $data['tahun']);
+        $kalenderDb = sprintf('%d-%d-%d', $data['minggu'], $data['bulan'], $data['tahun']);
 
-    // Untuk tampilan di UI (kolom judul)
-    $judulText = sprintf('Minggu ke-%d, %02d/%d', $data['minggu'], $data['bulan'], $data['tahun']);
+        $judulText = sprintf('Minggu ke-%d, %02d/%d', $data['minggu'], $data['bulan'], $data['tahun']);
+
+        // block duplikat tanggal
+        $exists = KalenderKerjaV2::query()
+            ->where('kalender', $kalenderDb)
+            ->where('id', '!=', $row->id)
+            ->exists();
+        if ($exists) {
+            return back()
+                ->withErrors(['kalender' => "Data untuk {$judulText} sudah ada."])
+                ->withInput();
+        }
 
         $row->update([
             'periode' => sprintf('Minggu %d', $data['minggu']),
             'tgl_awal' => $data['tgl_awal'],
             'tgl_akhir' => $data['tgl_akhir'],
+            // simpan dalam satuan persen (contoh: input 50 => simpan 50, bukan 0.5)
             'persentase_decimal' => (float) $data['wfo_maks'],
-            'persentase' => ((float) $data['wfo_maks']) / 100.0,
+            'persentase' => (float) $data['wfo_maks'],
             'kalender' => $kalenderDb,
             'judul' => $judulText,
         ]);
