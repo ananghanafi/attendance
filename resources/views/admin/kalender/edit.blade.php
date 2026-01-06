@@ -1,0 +1,162 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edit Kalender Kerja</title>
+    <style>
+      :root{--bg:#f4f7fa;--card:#fff;--accent:#5966f7;--muted:#6b7280}
+      *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
+      body{margin:0;background:var(--bg)}
+      .wrap{max-width:900px;margin:32px auto;padding:0 16px}
+      .card{background:var(--card);border-radius:10px;box-shadow:0 6px 20px rgba(20,20,60,0.06);padding:18px}
+      label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+      select,input{width:100%;padding:11px 12px;border:1px solid #eef0f6;border-radius:8px;background:#fff;outline:none;font-size:14px}
+      select:focus,input:focus{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color:var(--accent)}
+      .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+      @media(max-width:900px){.grid{grid-template-columns:1fr}}
+      .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:14px}
+      @media(max-width:900px){.row2{grid-template-columns:1fr}}
+      .actions{margin-top:16px;display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+      .btn{padding:11px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+      .btn.primary{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(89,102,247,0.18)}
+      .btn.danger{background:#e11d48;color:#fff}
+      .error{margin:10px 0 0;color:#991b1b;background:#fff1f2;border:1px solid #fecdd3;padding:10px;border-radius:8px}
+      a{color:inherit}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div>
+            <h1 style="margin:0;font-size:20px">Edit Kalender Kerja</h1>
+            <div style="color:var(--muted);font-size:12px">ID: {{ $row->id }}</div>
+          </div>
+          <div>
+            <a href="{{ route('admin.kalender') }}" style="text-decoration:none">
+              <button type="button" class="btn">Kembali</button>
+            </a>
+          </div>
+        </div>
+
+        @if($errors->any())
+          <div class="error">{{ $errors->first() }}</div>
+        @endif
+
+        <form method="POST" action="{{ route('kalender.update', ['id' => $row->id]) }}" style="margin-top:14px">
+          @csrf
+          @method('PUT')
+
+          <div class="grid">
+            <div>
+              <label for="minggu">Minggu ke-</label>
+              <select id="minggu" name="minggu" required>
+                @php
+                  $parsedMinggu = null;
+                  if (!empty($row->periode) && preg_match('/(\d+)/', $row->periode, $m)) {
+                    $parsedMinggu = (int) $m[1];
+                  }
+                @endphp
+                @for($i=1;$i<=6;$i++)
+                  <option value="{{ $i }}" @selected(($parsedMinggu ?? 1) === $i)>{{ $i }}</option>
+                @endfor
+              </select>
+            </div>
+            <div>
+              <label for="wfo_maks">WFO Maksimal (%)</label>
+              @php
+                $wfoVal = $row->persentase_decimal;
+                if ($wfoVal === null && $row->persentase !== null) {
+                  $wfoVal = $row->persentase * 100;
+                }
+              @endphp
+              <input type="number" id="wfo_maks" name="wfo_maks" min="0" max="100" step="0.01" required value="{{ $wfoVal }}">
+            </div>
+            <div>
+              <label for="bulan">Bulan</label>
+              <select id="bulan" name="bulan" required></select>
+            </div>
+            <div>
+              <label for="tahun">Tahun</label>
+              <select id="tahun" name="tahun" required></select>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div>
+              <label for="tgl_awal">Tanggal Awal</label>
+              <input type="date" id="tgl_awal" name="tgl_awal" required value="{{ optional($row->tgl_awal)->format('Y-m-d') }}">
+            </div>
+            <div>
+              <label for="tgl_akhir">Tanggal Akhir</label>
+              <input type="date" id="tgl_akhir" name="tgl_akhir" required value="{{ optional($row->tgl_akhir)->format('Y-m-d') }}">
+            </div>
+          </div>
+
+          <div class="actions">
+            <div style="color:var(--muted);font-size:12px">Perubahan akan memperbarui judul/periode sesuai input.</div>
+            <button type="submit" class="btn primary">Simpan Perubahan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const bulanEl = document.getElementById('bulan');
+      const tahunEl = document.getElementById('tahun');
+      const tglAwalEl = document.getElementById('tgl_awal');
+      const tglAkhirEl = document.getElementById('tgl_akhir');
+
+      const bulanNames = [
+        'Januari','Februari','Maret','April','Mei','Juni',
+        'Juli','Agustus','September','Oktober','November','Desember'
+      ];
+
+      function initBulan() {
+        bulanEl.innerHTML = '';
+        bulanNames.forEach((n, i) => {
+          const opt = document.createElement('option');
+          opt.value = String(i + 1);
+          opt.textContent = n;
+          bulanEl.appendChild(opt);
+        });
+      }
+
+      function initTahun() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const years = [y - 1, y, y + 1, y + 2];
+        tahunEl.innerHTML = '';
+        years.forEach(yy => {
+          const opt = document.createElement('option');
+          opt.value = String(yy);
+          opt.textContent = String(yy);
+          tahunEl.appendChild(opt);
+        });
+      }
+
+      initBulan();
+      initTahun();
+
+      // bulan/tahun auto dari tgl_awal (fallback: tahun sekarang)
+      if (tglAwalEl.value) {
+        const d = new Date(tglAwalEl.value + 'T00:00:00');
+        bulanEl.value = String(d.getMonth() + 1);
+        tahunEl.value = String(d.getFullYear());
+      } else {
+        const now = new Date();
+        bulanEl.value = String(now.getMonth() + 1);
+        tahunEl.value = String(now.getFullYear());
+      }
+
+      // validasi cepat client side
+      tglAkhirEl.addEventListener('change', () => {
+        if (tglAwalEl.value && tglAkhirEl.value && tglAkhirEl.value < tglAwalEl.value) {
+          alert('Tanggal akhir harus lebih besar atau sama dengan tanggal awal.');
+          tglAkhirEl.value = '';
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -12,29 +13,58 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->timestamps();
+            // id as serial (Postgres) / auto-increment integer
+            $table->increments('id');
+
+            $table->string('username', 35)->nullable();
+            $table->string('password', 255)->nullable();
+            $table->string('nama', 50)->nullable();
+            $table->string('nip', 35)->nullable();
+            $table->string('email', 50)->nullable();
+            $table->string('telp', 20)->nullable();
+
+            $table->integer('role_id')->nullable();
+            $table->integer('biro_id')->nullable();
+
+            $table->string('nip_atasan', 10)->nullable();
+
+            // flags and tinyints
+            $table->boolean('isdel')->default(false);
+
+            $table->date('tgl_lahir')->nullable();
+
+            $table->string('transportasi', 255)->nullable();
+            $table->string('id_kel', 255)->nullable();
+
+            $table->integer('id_lokasi_car_pooling')->nullable();
+
+            // these were declared as int in the original SQL
+            $table->integer('is_covid_ranger')->nullable();
+            $table->integer('is_tim_covid')->nullable();
+
+            $table->boolean('is_satgas_covid')->default(false);
+            $table->boolean('is_hc')->default(false);
+            $table->boolean('is_umum')->nullable();
+
+            $table->string('jabatan', 255)->nullable();
+
+            $table->boolean('is_kirim')->default(false);
+            $table->boolean('is_crot')->default(false);
+            $table->boolean('is_pulang')->nullable();
+
+            // keep no timestamps to match original SQL
         });
 
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
-        });
-
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
-        });
+        // If you want to set the sequence start (AUTO_INCREMENT = 1076 in the original SQL),
+        // set the sequence value for PostgreSQL. This uses pg_get_serial_sequence to find
+        // the correct sequence name and sets it to 1076.
+        try {
+            if (DB::getDriverName() === 'pgsql') {
+                DB::statement("SELECT setval(pg_get_serial_sequence('users', 'id'), 1076, true);");
+            }
+        } catch (\Throwable $e) {
+            // If DB is not available at migration creation time (or not pgsql), skip silently.
+        }
     }
 
     /**
@@ -43,7 +73,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
     }
 };
