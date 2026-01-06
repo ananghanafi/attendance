@@ -45,6 +45,12 @@ class AdminKalenderKerjaController extends Controller
             'tgl_akhir.after_or_equal' => 'Tanggal akhir harus lebih besar atau sama dengan tanggal awal.',
         ]);
 
+    // Kolom DB "kalender" => format: minggu-bulan-tahun (contoh: 1-1-2026)
+    $kalenderDb = sprintf('%d-%d-%d', $data['minggu'], $data['bulan'], $data['tahun']);
+
+    // Untuk tampilan di UI (kolom judul)
+    $judulText = sprintf('Minggu ke-%d, %02d/%d', $data['minggu'], $data['bulan'], $data['tahun']);
+
         KalenderKerjaV2::create([
             'periode' => sprintf('Minggu %d', $data['minggu']),
             'tgl_awal' => $data['tgl_awal'],
@@ -52,7 +58,9 @@ class AdminKalenderKerjaController extends Controller
         // Simpan dua format untuk jaga-jaga kompatibilitas data lama:
             'persentase_decimal' => (float) $data['wfo_maks'],
             'persentase' => ((float) $data['wfo_maks']) / 100.0,
-            'judul' => sprintf('Minggu ke-%d, %02d/%d', $data['minggu'], $data['bulan'], $data['tahun']),
+            // kolom "kalender" wajib terisi tapi tidak perlu ditampilkan di UI
+            'kalender' => $kalenderDb,
+            'judul' => $judulText,
             'active' => false,
         ]);
 
@@ -74,7 +82,7 @@ class AdminKalenderKerjaController extends Controller
         $this->ensureAdmin();
 
         $row = KalenderKerjaV2::query()->findOrFail($id);
-        
+
         return view('admin.kalender.edit', ['row' => $row]);
     }
 
@@ -95,13 +103,20 @@ class AdminKalenderKerjaController extends Controller
             'tgl_akhir.after_or_equal' => 'Tanggal akhir harus lebih besar atau sama dengan tanggal awal.',
         ]);
 
+    // Kolom DB "kalender" => format: minggu-bulan-tahun (contoh: 2-1-2026)
+    $kalenderDb = sprintf('%d-%d-%d', $data['minggu'], $data['bulan'], $data['tahun']);
+
+    // Untuk tampilan di UI (kolom judul)
+    $judulText = sprintf('Minggu ke-%d, %02d/%d', $data['minggu'], $data['bulan'], $data['tahun']);
+
         $row->update([
             'periode' => sprintf('Minggu %d', $data['minggu']),
             'tgl_awal' => $data['tgl_awal'],
             'tgl_akhir' => $data['tgl_akhir'],
             'persentase_decimal' => (float) $data['wfo_maks'],
             'persentase' => ((float) $data['wfo_maks']) / 100.0,
-            'judul' => sprintf('Minggu ke-%d, %02d/%d', $data['minggu'], $data['bulan'], $data['tahun']),
+            'kalender' => $kalenderDb,
+            'judul' => $judulText,
         ]);
 
         return redirect()->route('admin.kalender')->with('status', 'Data kalender kerja berhasil diperbarui.');

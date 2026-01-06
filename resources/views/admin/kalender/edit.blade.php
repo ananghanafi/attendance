@@ -31,7 +31,6 @@
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
           <div>
             <h1 style="margin:0;font-size:20px">Edit Kalender Kerja</h1>
-            <div style="color:var(--muted);font-size:12px">ID: {{ $row->id }}</div>
           </div>
           <div>
             <a href="{{ route('admin.kalender') }}" style="text-decoration:none">

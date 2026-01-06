@@ -125,8 +125,6 @@
               </div>
             </div>
 
-            <div class="hint">Pilih Bulan/Tahun terlebih dahulu. Lalu klik tanggal di kalender untuk mengisi Tanggal Awal dan Tanggal Akhir.</div>
-
             <div style="margin-top:14px">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
                 <div>
@@ -267,10 +265,37 @@
         pickMode = mode;
         pickModeStart.classList.toggle('primary', mode === 'start');
         pickModeEnd.classList.toggle('primary', mode === 'end');
+
+        // Visual cue pada input yang sedang aktif
+        const activeShadow = '0 0 0 3px rgba(89,102,247,0.10)';
+        const inactiveShadow = '';
+        const activeBorder = '1px solid rgba(89,102,247,0.55)';
+        const inactiveBorder = '';
+        if (mode === 'start') {
+          tglAwalView.style.boxShadow = activeShadow;
+          tglAwalView.style.border = activeBorder;
+          tglAkhirView.style.boxShadow = inactiveShadow;
+          tglAkhirView.style.border = inactiveBorder;
+        } else {
+          tglAkhirView.style.boxShadow = activeShadow;
+          tglAkhirView.style.border = activeBorder;
+          tglAwalView.style.boxShadow = inactiveShadow;
+          tglAwalView.style.border = inactiveBorder;
+        }
       }
 
       pickModeStart.addEventListener('click', () => setPickMode('start'));
       pickModeEnd.addEventListener('click', () => setPickMode('end'));
+
+      // UX: klik input otomatis ganti mode (nggak perlu klik tombol bawah)
+      ;[tglAwalView, tglAwalHidden].forEach(el => {
+        el.addEventListener('click', () => setPickMode('start'));
+        el.addEventListener('focus', () => setPickMode('start'));
+      });
+      ;[tglAkhirView, tglAkhirHidden].forEach(el => {
+        el.addEventListener('click', () => setPickMode('end'));
+        el.addEventListener('focus', () => setPickMode('end'));
+      });
       setPickMode('start');
 
       function pad2(n){ return String(n).padStart(2, '0'); }
