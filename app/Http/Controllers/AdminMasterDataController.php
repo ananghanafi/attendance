@@ -54,7 +54,7 @@ class AdminMasterDataController extends Controller
 
         Biro::query()->create($validated);
 
-        return redirect()->route('biro.index')->with('status', 'Biro berhasil ditambahkan.');
+        return redirect()->route('settings.index')->with('status', 'Biro berhasil ditambahkan.');
     }
 
     public function biroEdit(int $id)
@@ -86,7 +86,7 @@ class AdminMasterDataController extends Controller
         $row->fill($validated);
         $row->save();
 
-        return redirect()->route('biro.index')->with('status', 'Biro berhasil diperbarui.');
+        return redirect()->route('settings.index')->with('status', 'Biro berhasil diperbarui.');
     }
 
     public function biroDestroy(int $id)
@@ -96,7 +96,7 @@ class AdminMasterDataController extends Controller
         $row = Biro::query()->findOrFail($id);
         $row->delete();
 
-        return redirect()->route('biro.index')->with('status', 'Biro berhasil dihapus.');
+        return redirect()->route('settings.index')->with('status', 'Biro berhasil dihapus.');
     }
 
     // ---------------------- JABATAN ----------------------
@@ -131,7 +131,7 @@ class AdminMasterDataController extends Controller
 
         Jabatan::query()->create($validated);
 
-        return redirect()->route('jabatan.index')->with('status', 'Jabatan berhasil ditambahkan.');
+        return redirect()->route('settings.index')->with('status', 'Jabatan berhasil ditambahkan.');
     }
 
     public function jabatanEdit(int $id)
@@ -161,7 +161,7 @@ class AdminMasterDataController extends Controller
         $row->fill($validated);
         $row->save();
 
-        return redirect()->route('jabatan.index')->with('status', 'Jabatan berhasil diperbarui.');
+        return redirect()->route('settings.index')->with('status', 'Jabatan berhasil diperbarui.');
     }
 
     public function jabatanDestroy(int $id)
@@ -171,7 +171,7 @@ class AdminMasterDataController extends Controller
         $row = Jabatan::query()->findOrFail($id);
         $row->delete();
 
-        return redirect()->route('jabatan.index')->with('status', 'Jabatan berhasil dihapus.');
+        return redirect()->route('settings.index')->with('status', 'Jabatan berhasil dihapus.');
     }
 
     // ---------------------- ROLE ----------------------
@@ -205,7 +205,7 @@ class AdminMasterDataController extends Controller
 
         Role::query()->create($validated);
 
-        return redirect()->route('role.index')->with('status', 'Role berhasil ditambahkan.');
+        return redirect()->route('settings.index')->with('status', 'Role berhasil ditambahkan.');
     }
 
     public function roleEdit(int $id)
@@ -234,7 +234,7 @@ class AdminMasterDataController extends Controller
         $row->fill($validated);
         $row->save();
 
-        return redirect()->route('role.index')->with('status', 'Role berhasil diperbarui.');
+        return redirect()->route('settings.index')->with('status', 'Role berhasil diperbarui.');
     }
 
     public function roleDestroy(int $id)
@@ -244,6 +244,6 @@ class AdminMasterDataController extends Controller
         $row = Role::query()->findOrFail($id);
         $row->delete();
 
-        return redirect()->route('role.index')->with('status', 'Role berhasil dihapus.');
+        return redirect()->route('settings.index')->with('status', 'Role berhasil dihapus.');
     }
 }

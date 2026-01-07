@@ -1,83 +1,51 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Kalender Kerja</title>
-    <style>
-      :root{--bg:#f5f6fa;--card:#fff;--accent:#5f73ff;--muted:#6b7280;--border:#e7eaf3}
-      *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
-      body{margin:0;background:var(--bg);color:#111827}
+@extends('layouts.app')
 
-  .wrap{max-width:1200px;margin:28px auto;padding:0 16px}
+@section('title', 'Kalender Kerja')
 
-      .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap}
-      .top h1{margin:0;font-size:22px}
+@section('styles')
+.layout{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start;width:100%;min-width:0;max-width:100%}
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .tabs{flex-direction:row;gap:10px}
+  .tab{flex:1;text-align:center}
+}
+main{min-width:0;max-width:100%}
+.panel{min-width:0;max-width:100%}
+.card,.sidebarCard{min-width:0;max-width:100%}
+.card{overflow:hidden;background:#fff;border-radius:18px;border:1px solid #e7eaf3;box-shadow:0 10px 35px rgba(35,45,120,.08);padding:18px}
+.tableScroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
+.tableScroll table{min-width:720px;white-space:nowrap}
+h2,.tab{overflow-wrap:anywhere;word-break:break-word}
+.sidebarCard{background:#fff;border-radius:18px;border:1px solid #e7eaf3;box-shadow:0 10px 35px rgba(35,45,120,.08);padding:12px}
+.side-title{font-size:12px;color:var(--text-muted);margin:0 0 10px}
+.tabs{display:flex;flex-direction:column;gap:8px}
+.tab{width:100%;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid #e9ecf5;background:#fff;color:#111;cursor:pointer;font-weight:700}
+.tab.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.panel{display:none}
+.panel.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+label{display:block;font-size:12px;color:var(--text-muted);margin-bottom:6px}
+select,input{width:100%;padding:11px 12px;border:1px solid #eef0f6;border-radius:12px;background:#fff;outline:none;font-size:14px}
+select:focus,input:focus{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color:var(--primary)}
+.row2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:14px}
+@media(max-width:900px){.row2{grid-template-columns:1fr}}
+.calendar{margin-top:14px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.cal-head{font-size:12px;color:var(--text-muted);text-align:center}
+.date{padding:10px 0;border:1px solid #eef0f6;border-radius:12px;background:#fff;text-align:center;cursor:pointer;user-select:none}
+.date.selected{background:rgba(89,102,247,0.12);border-color:rgba(89,102,247,0.5)}
+.actions{margin-top:16px;display:flex;gap:10px;justify-content:flex-end}
+.btn{padding:11px 14px;border-radius:12px;border:none;cursor:pointer;font-weight:800;background:#fff;border:1px solid #eef0f6}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 6px 18px rgba(89,102,247,0.18)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 8px;border-bottom:1px solid #eef1ff;text-align:left;font-size:14px;white-space:nowrap}
+th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
+.status{margin:10px 0 0;color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0;padding:10px;border-radius:12px}
+.error{margin:10px 0 0;color:#991b1b;background:#fff1f2;border:1px solid #fecdd3;padding:10px;border-radius:12px}
+@endsection
 
-      .layout{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start;width:100%}
-      @media(max-width:900px){
-        .layout{grid-template-columns:1fr}
-        .tabs{flex-direction:row;gap:10px}
-        .tab{flex:1;text-align:center}
-      }
-
-      /* Mobile overflow safety: keep text inside cards */
-      .card, .sidebarCard{min-width:0}
-  .card{overflow:hidden}
-  .tableScroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
-  .tableScroll table{min-width:720px;white-space:nowrap}
-  th,td{white-space:nowrap}
-
-      /* allow long titles/buttons to wrap instead of spilling */
-      h1,h2,th,td,.tab{overflow-wrap:anywhere;word-break:break-word}
-      button{max-width:100%}
-
-      .sidebarCard{background:var(--card);border-radius:18px;border:1px solid var(--border);box-shadow:0 10px 35px rgba(35,45,120,.08);padding:12px}
-      .side-title{font-size:12px;color:var(--muted);margin:0 0 10px}
-      .tabs{display:flex;flex-direction:column;gap:8px}
-      .tab{width:100%;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid #e9ecf5;background:#fff;color:#111;cursor:pointer;font-weight:700}
-      .tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
-
-      .panel{display:none}
-      .panel.active{display:block}
-
-      .card{background:var(--card);border-radius:18px;border:1px solid var(--border);box-shadow:0 10px 35px rgba(35,45,120,.08);padding:18px}
-      .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-      @media(max-width:900px){.grid{grid-template-columns:1fr}}
-
-      label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-      select,input{width:100%;padding:11px 12px;border:1px solid #eef0f6;border-radius:12px;background:#fff;outline:none;font-size:14px}
-      select:focus,input:focus{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color:var(--accent)}
-
-      .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:14px}
-      @media(max-width:900px){.row2{grid-template-columns:1fr}}
-
-      .calendar{margin-top:14px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
-      .cal-head{font-size:12px;color:var(--muted);text-align:center}
-      .date{padding:10px 0;border:1px solid #eef0f6;border-radius:12px;background:#fff;text-align:center;cursor:pointer;user-select:none}
-      .date.selected{background:rgba(89,102,247,0.12);border-color:rgba(89,102,247,0.5)}
-
-      .actions{margin-top:16px;display:flex;gap:10px;justify-content:flex-end}
-      .btn{padding:11px 14px;border-radius:12px;border:none;cursor:pointer;font-weight:800;background:#fff;border:1px solid #eef0f6}
-      .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(89,102,247,0.18)}
-
-      table{width:100%;border-collapse:collapse}
-      th,td{padding:10px 8px;border-bottom:1px solid #eef1ff;text-align:left;font-size:14px}
-      th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
-      .status{margin:10px 0 0;color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0;padding:10px;border-radius:12px}
-      .error{margin:10px 0 0;color:#991b1b;background:#fff1f2;border:1px solid #fecdd3;padding:10px;border-radius:12px}
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <div class="top">
-        <h1>Kalender Kerja</h1>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          @include('partials.back', ['fallback' => route('dashboard')])
-        </div>
-      </div>
-
-      <div class="layout">
+@section('content')
+  <div class="layout">
         <aside class="sidebarCard">
           <div class="side-title">Menu</div>
           <div class="tabs" role="tablist">
@@ -164,8 +132,19 @@
       <div id="panel-data" class="panel">
         <div class="card">
           <h2 style="margin:0 0 12px">Data Kalender Kerja</h2>
+          
+          <!-- Search Box -->
+          <div style="margin-bottom:16px">
+            <input 
+              type="text" 
+              id="searchKalender" 
+              placeholder="🔍 Cari kalender (minggu, bulan, tahun, WFO maks...)" 
+              style="width:100%;padding:11px 12px;border:1px solid #eef0f6;border-radius:12px;background:#fff;outline:none;font-size:14px"
+            >
+          </div>
+
               <div class="tableScroll">
-              <table>
+              <table id="tableKalender">
                 <thead>
                   <tr>
                     <th>No</th>
@@ -178,7 +157,7 @@
                 </thead>
                 <tbody>
                   @forelse($rows as $r)
-                    <tr>
+                    <tr class="kalender-row">
                       <td>{{ $loop->iteration }}</td>
                       <td>{{ $r->judul }}</td>
                       <td>{{ $r->tgl_awal ? $r->tgl_awal->format('Y-m-d') : '' }}</td>
@@ -199,21 +178,25 @@
                       </td>
                     </tr>
                   @empty
-                    <tr>
+                    <tr id="emptyRow">
                       <td colspan="6" style="color:var(--muted)">Belum ada data.</td>
                     </tr>
                   @endforelse
                 </tbody>
               </table>
               </div>
+              
+          <!-- No Results Message -->
+          <div id="noResults" style="display:none;text-align:center;padding:20px;color:var(--text-muted)">
+            Tidak ada data yang cocok dengan pencarian.
+          </div>
         </div>
       </div>
     </main>
-        </main>
-      </div>
-    </div>
+  </div>
+@endsection
 
-    <script>
+@section('scripts')
       // --- Tabs ---
       const tabs = document.querySelectorAll('.tab');
       const panelForm = document.getElementById('panel-form');
@@ -445,7 +428,35 @@
       }));
 
       buildCalendar();
-    </script>
-    </script>
-  </body>
-</html>
+
+      // --- Search Functionality ---
+      const searchInput = document.getElementById('searchKalender');
+      const tableRows = document.querySelectorAll('.kalender-row');
+      const noResults = document.getElementById('noResults');
+      const emptyRow = document.getElementById('emptyRow');
+
+      if (searchInput && tableRows.length > 0) {
+        searchInput.addEventListener('input', function() {
+          const searchTerm = this.value.toLowerCase().trim();
+          let visibleCount = 0;
+
+          tableRows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+              row.style.display = '';
+              visibleCount++;
+            } else {
+              row.style.display = 'none';
+            }
+          });
+
+          // Show/hide no results message
+          if (visibleCount === 0) {
+            noResults.style.display = 'block';
+            if (emptyRow) emptyRow.style.display = 'none';
+          } else {
+            noResults.style.display = 'none';
+          }
+        });
+      }
+@endsection

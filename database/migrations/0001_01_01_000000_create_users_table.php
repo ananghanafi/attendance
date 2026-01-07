@@ -55,7 +55,6 @@ return new class extends Migration
             // keep no timestamps to match original SQL
         });
 
-        // Reset sequence start for PostgreSQL so IDs begin from 1 in a fresh database.
         try {
             if (DB::getDriverName() === 'pgsql') {
                 DB::statement("SELECT setval(pg_get_serial_sequence('users', 'id'), 1, false);");

@@ -29,6 +29,9 @@ class AuthController extends Controller
 
             $user = Auth::user();
             $role = DB::table('roles')->where('id', $user->role_id)->value('role_name');
+            
+            // Simpan role_name ke session
+            $request->session()->put('role_name', $role);
 
             return redirect()->intended('/dashboard');
         }

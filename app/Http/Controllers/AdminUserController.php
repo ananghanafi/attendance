@@ -120,7 +120,7 @@ class AdminUserController extends Controller
         $row->fill($validated);
         $row->save();
 
-        return redirect()->route('users.index')->with('status', 'User berhasil diperbarui.');
+        return redirect()->route('settings.index')->with('status', 'User berhasil diperbarui.');
     }
 
     public function destroy(int $id)
@@ -130,7 +130,7 @@ class AdminUserController extends Controller
         $row = User::query()->findOrFail($id);
         $row->delete();
 
-        return redirect()->route('users.index')->with('status', 'User berhasil dihapus.');
+        return redirect()->route('settings.index')->with('status', 'User berhasil dihapus.');
     }
 
     private function dropdownData(): array
@@ -213,6 +213,6 @@ class AdminUserController extends Controller
         // With cast password=hashed di model, password akan otomatis di-hash saat disimpan.
         User::query()->create($validated);
 
-        return redirect()->route('users.create')->with('status', 'User berhasil ditambahkan.');
+        return redirect()->route('settings.index')->with('status', 'User berhasil ditambahkan.');
     }
 }

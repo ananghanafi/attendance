@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminKalenderKerjaController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AdminMasterDataController;
+use App\Http\Controllers\SettingsController;
 
 // Landing page -> tunjukkan login form langsung
 Route::get('/', [AuthController::class, 'showLoginForm']);
@@ -17,8 +18,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
 
-    // Grouped settings landing pages (standalone, no sidebar)
-    Route::view('/settings', 'settings.index')->name('settings.index');
+    // Settings (with tabs for user, biro, jabatan, role)
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::view('/settings/user', 'settings.user')->name('settings.user');
     Route::view('/settings/biro', 'settings.biro')->name('settings.biro');
     Route::view('/settings/jabatan', 'settings.jabatan')->name('settings.jabatan');
