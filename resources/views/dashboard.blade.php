@@ -18,6 +18,7 @@
       .tile .t{font-weight:700;margin-bottom:6px}
       .tile .d{color:#6b7280;font-size:13px}
       .pill{display:inline-block;font-size:12px;padding:3px 8px;border-radius:100px;background:#eef2ff;color:#3730a3;margin-left:8px}
+      .sectionTitle{margin:10px 0 0;font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em}
     </style>
   </head>
   <body>
@@ -37,13 +38,22 @@
 
         <hr style="margin:16px 0">
 
+        @if(session('status'))
+          <div style="margin:0 0 12px;color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0;padding:10px;border-radius:8px">{{ session('status') }}</div>
+        @endif
+
         <p style="margin:0 0 12px;color:#6b7280">Pilih menu yang ingin dibuka:</p>
 
         <div class="grid">
-          @if(($role ?? '') === 'admin')
+          @if(in_array(($role ?? ''), ['admin', 'ADMIN'], true))
             <a class="tile" href="{{ route('admin.kalender') }}">
               <div class="t">Kalender Kerja <span class="pill">Admin</span></div>
               <div class="d">Input periode (minggu Senin–Minggu) dan lihat data kalender kerja.</div>
+            </a>
+
+            <a class="tile" href="{{ route('settings.index') }}">
+              <div class="t">Setting User <span class="pill">Admin</span></div>
+              <div class="d">Kelola user, biro, jabatan, dan role dalam satu tempat.</div>
             </a>
           @endif
 

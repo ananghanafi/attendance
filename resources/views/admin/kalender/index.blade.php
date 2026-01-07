@@ -5,79 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Kalender Kerja</title>
     <style>
-      :root{--bg:#f4f7fa;--card:#fff;--accent:#5966f7;--muted:#6b7280}
+      :root{--bg:#f5f6fa;--card:#fff;--accent:#5f73ff;--muted:#6b7280;--border:#e7eaf3}
       *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
-      body{margin:0;background:var(--bg)}
-      .wrap{max-width:1100px;margin:32px auto;padding:0 16px}
-      .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+      body{margin:0;background:var(--bg);color:#111827}
+
+  .wrap{max-width:1200px;margin:28px auto;padding:0 16px}
+
+      .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap}
       .top h1{margin:0;font-size:22px}
-      .logout button{padding:8px 12px;border-radius:6px;border:none;background:#e11d48;color:#fff;cursor:pointer}
 
-  .layout{display:grid;grid-template-columns:240px 1fr;gap:16px;align-items:start}
-  @media(max-width:900px){.layout{grid-template-columns:1fr}}
+      .layout{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start;width:100%}
+      @media(max-width:900px){
+        .layout{grid-template-columns:1fr}
+        .tabs{flex-direction:row;gap:10px}
+        .tab{flex:1;text-align:center}
+      }
 
-  .sidebar{background:var(--card);border-radius:10px;box-shadow:0 6px 20px rgba(20,20,60,0.06);padding:12px}
-  .side-title{font-size:12px;color:var(--muted);margin:0 0 10px}
-  .tabs{display:flex;flex-direction:column;gap:8px}
-  .tab{width:100%;text-align:left;padding:10px 12px;border-radius:10px;border:1px solid #e9ecf5;background:#fff;color:#111;cursor:pointer}
-  .tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+      /* Mobile overflow safety: keep text inside cards */
+      .card, .sidebarCard{min-width:0}
+  .card{overflow:hidden}
+  .tableScroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
+  .tableScroll table{min-width:720px;white-space:nowrap}
+  th,td{white-space:nowrap}
+
+      /* allow long titles/buttons to wrap instead of spilling */
+      h1,h2,th,td,.tab{overflow-wrap:anywhere;word-break:break-word}
+      button{max-width:100%}
+
+      .sidebarCard{background:var(--card);border-radius:18px;border:1px solid var(--border);box-shadow:0 10px 35px rgba(35,45,120,.08);padding:12px}
+      .side-title{font-size:12px;color:var(--muted);margin:0 0 10px}
+      .tabs{display:flex;flex-direction:column;gap:8px}
+      .tab{width:100%;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid #e9ecf5;background:#fff;color:#111;cursor:pointer;font-weight:700}
+      .tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
       .panel{display:none}
       .panel.active{display:block}
 
-      .card{background:var(--card);border-radius:10px;box-shadow:0 6px 20px rgba(20,20,60,0.06);padding:18px}
-  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+      .card{background:var(--card);border-radius:18px;border:1px solid var(--border);box-shadow:0 10px 35px rgba(35,45,120,.08);padding:18px}
+      .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+      @media(max-width:900px){.grid{grid-template-columns:1fr}}
 
       label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-      select,input{width:100%;padding:11px 12px;border:1px solid #eef0f6;border-radius:8px;background:#fff;outline:none;font-size:14px}
+      select,input{width:100%;padding:11px 12px;border:1px solid #eef0f6;border-radius:12px;background:#fff;outline:none;font-size:14px}
       select:focus,input:focus{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color:var(--accent)}
 
       .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:14px}
       @media(max-width:900px){.row2{grid-template-columns:1fr}}
 
-      .calendar{margin-top:14px;display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+      .calendar{margin-top:14px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
       .cal-head{font-size:12px;color:var(--muted);text-align:center}
-      .date{padding:10px 0;border:1px solid #eef0f6;border-radius:8px;background:#fff;text-align:center;cursor:pointer;user-select:none}
-      .date.disabled{opacity:.35;cursor:not-allowed}
+      .date{padding:10px 0;border:1px solid #eef0f6;border-radius:12px;background:#fff;text-align:center;cursor:pointer;user-select:none}
       .date.selected{background:rgba(89,102,247,0.12);border-color:rgba(89,102,247,0.5)}
 
       .actions{margin-top:16px;display:flex;gap:10px;justify-content:flex-end}
-      .btn{padding:11px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
-      .btn.primary{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(89,102,247,0.18)}
+      .btn{padding:11px 14px;border-radius:12px;border:none;cursor:pointer;font-weight:800;background:#fff;border:1px solid #eef0f6}
+      .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(89,102,247,0.18)}
 
       table{width:100%;border-collapse:collapse}
-      th,td{padding:10px 8px;border-bottom:1px solid #eef0f6;text-align:left;font-size:14px}
-      th{color:#111}
-      .status{margin:10px 0 0;color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0;padding:10px;border-radius:8px}
-      .error{margin:10px 0 0;color:#991b1b;background:#fff1f2;border:1px solid #fecdd3;padding:10px;border-radius:8px}
-      .hint{font-size:12px;color:var(--muted);margin-top:8px}
+      th,td{padding:10px 8px;border-bottom:1px solid #eef1ff;text-align:left;font-size:14px}
+      th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
+      .status{margin:10px 0 0;color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0;padding:10px;border-radius:12px}
+      .error{margin:10px 0 0;color:#991b1b;background:#fff1f2;border:1px solid #fecdd3;padding:10px;border-radius:12px}
     </style>
   </head>
   <body>
     <div class="wrap">
       <div class="top">
-        <h1>Dashboard Kalender Kerja</h1>
-        <div class="logout">
-          <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit">Logout</button>
-          </form>
+        <h1>Kalender Kerja</h1>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          @include('partials.back', ['fallback' => route('dashboard')])
         </div>
       </div>
 
       <div class="layout">
-        <aside class="sidebar">
+        <aside class="sidebarCard">
           <div class="side-title">Menu</div>
           <div class="tabs" role="tablist">
             <button type="button" class="tab active" data-tab="form">Form Input Kalender Kerja</button>
             <button type="button" class="tab" data-tab="data">Data Kalender Kerja</button>
           </div>
         </aside>
-
         <main>
-          <div id="panel-form" class="panel active">
-            <div class="card">
+      <div id="panel-form" class="panel active">
+        <div class="card">
           <h2 style="margin:0 0 12px">Input Kalender Kerja</h2>
 
           @if(session('status'))
@@ -148,12 +158,13 @@
               <button type="submit" class="btn primary">Simpan</button>
             </div>
           </form>
-            </div>
-          </div>
+        </div>
+      </div>
 
-          <div id="panel-data" class="panel">
-            <div class="card">
-              <h2 style="margin:0 0 12px">Data Kalender Kerja</h2>
+      <div id="panel-data" class="panel">
+        <div class="card">
+          <h2 style="margin:0 0 12px">Data Kalender Kerja</h2>
+              <div class="tableScroll">
               <table>
                 <thead>
                   <tr>
@@ -194,8 +205,10 @@
                   @endforelse
                 </tbody>
               </table>
-            </div>
-          </div>
+              </div>
+        </div>
+      </div>
+    </main>
         </main>
       </div>
     </div>
@@ -432,6 +445,7 @@
       }));
 
       buildCalendar();
+    </script>
     </script>
   </body>
 </html>

@@ -14,7 +14,7 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             // id as serial (Postgres) / auto-increment integer
-            $table->increments('id');
+            $table->id();
 
             $table->string('username', 35)->nullable();
             $table->string('password', 255)->nullable();
@@ -55,12 +55,10 @@ return new class extends Migration
             // keep no timestamps to match original SQL
         });
 
-        // If you want to set the sequence start (AUTO_INCREMENT = 1076 in the original SQL),
-        // set the sequence value for PostgreSQL. This uses pg_get_serial_sequence to find
-        // the correct sequence name and sets it to 1076.
+        // Reset sequence start for PostgreSQL so IDs begin from 1 in a fresh database.
         try {
             if (DB::getDriverName() === 'pgsql') {
-                DB::statement("SELECT setval(pg_get_serial_sequence('users', 'id'), 1076, true);");
+                DB::statement("SELECT setval(pg_get_serial_sequence('users', 'id'), 1, false);");
             }
         } catch (\Throwable $e) {
             // If DB is not available at migration creation time (or not pgsql), skip silently.

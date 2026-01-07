@@ -12,15 +12,37 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    public $timestamps = false;
+
     /**
-     * The attributes that are mass assignable.
+     * Kolom yang boleh diisi via create()/update() (mass assignment)
      *
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
+        'username',
         'password',
+        'nama',
+        'nip',
+        'email',
+        'telp',
+        'role_id',
+        'biro_id',
+        'nip_atasan',
+        'isdel',
+        'tgl_lahir',
+        'transportasi',
+        'id_kel',
+        'id_lokasi_car_pooling',
+        'is_covid_ranger',
+        'is_tim_covid',
+        'is_satgas_covid',
+        'is_hc',
+        'is_umum',
+        'jabatan',
+        'is_kirim',
+        'is_crot',
+        'is_pulang',
     ];
 
     /**
@@ -41,8 +63,13 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'isdel' => 'boolean',
+            'is_satgas_covid' => 'boolean',
+            'is_hc' => 'boolean',
+            'is_kirim' => 'boolean',
+            'is_crot' => 'boolean',
+            'tgl_lahir' => 'date',
         ];
     }
 }

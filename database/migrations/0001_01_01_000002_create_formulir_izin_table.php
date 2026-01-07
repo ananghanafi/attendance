@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('formulir_izin', function (Blueprint $table) {
-            $table->increments('id');
+            $table->id();
 
             $table->string('nip', 255)->nullable();
             $table->string('status', 255)->nullable();
@@ -36,10 +36,10 @@ return new class extends Migration
             $table->integer('is_reject')->nullable();
         });
 
-        // Set Postgres sequence so the next inserted id equals 22494 (matching MySQL AUTO_INCREMENT = 22494)
+        // Reset sequence start for PostgreSQL so IDs begin from 1 in a fresh database.
         try {
             if (DB::getDriverName() === 'pgsql') {
-                DB::statement("SELECT setval(pg_get_serial_sequence('formulir_izin', 'id'), 22494, false);");
+                DB::statement("SELECT setval(pg_get_serial_sequence('formulir_izin', 'id'), 1, false);");
             }
         } catch (\Throwable $e) {
             // ignore if DB not available or not pgsql

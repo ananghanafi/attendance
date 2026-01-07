@@ -14,7 +14,7 @@ return new class extends Migration
     {
         Schema::create('biro', function (Blueprint $table) {
             // id as serial / auto-increment integer
-            $table->increments('id');
+            $table->id();
 
             $table->string('biro_name', 255)->nullable();
 
@@ -25,10 +25,10 @@ return new class extends Migration
             $table->string('divisi', 100)->nullable();
         });
 
-        // set Postgres sequence so the next inserted id equals 545 (matching MySQL AUTO_INCREMENT = 545)
+        // Reset sequence start for PostgreSQL so IDs begin from 1 in a fresh database.
         try {
             if (DB::getDriverName() === 'pgsql') {
-                DB::statement("SELECT setval(pg_get_serial_sequence('biro', 'id'), 545, false);");
+                DB::statement("SELECT setval(pg_get_serial_sequence('biro', 'id'), 1, false);");
             }
         } catch (\Throwable $e) {
             // ignore if DB not available or not pgsql

@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('kalender_kerja_v2', function (Blueprint $table) {
-            $table->increments('id');
+            $table->id();
 
             $table->string('kalender', 255)->nullable();
             $table->date('tgl_awal')->nullable();
@@ -38,10 +38,10 @@ return new class extends Migration
             $table->string('judul', 255)->nullable();
         });
 
-        // Set Postgres sequence so the next inserted id equals 241 (matching MySQL AUTO_INCREMENT = 241)
+        // Reset sequence start for PostgreSQL so IDs begin from 1 in a fresh database.
         try {
             if (DB::getDriverName() === 'pgsql') {
-                DB::statement("SELECT setval(pg_get_serial_sequence('kalender_kerja_v2', 'id'), 241, false);");
+                DB::statement("SELECT setval(pg_get_serial_sequence('kalender_kerja_v2', 'id'), 1, false);");
             }
         } catch (\Throwable $e) {
             // ignore if DB not available or not pgsql

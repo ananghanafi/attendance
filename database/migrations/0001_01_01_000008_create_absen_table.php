@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('absen', function (Blueprint $table) {
-            $table->increments('id');
+            $table->id();
 
             $table->string('nip', 255)->nullable();
             $table->date('tanggal')->nullable();
@@ -49,10 +49,10 @@ return new class extends Migration
             $table->text('alasan_pulang')->nullable();
         });
 
-        // Set Postgres sequence so the next inserted id equals 7822583 (matching MySQL AUTO_INCREMENT = 7822583)
+        // Reset sequence start for PostgreSQL so IDs begin from 1 in a fresh database.
         try {
             if (DB::getDriverName() === 'pgsql') {
-                DB::statement("SELECT setval(pg_get_serial_sequence('absen', 'id'), 7822583, false);");
+                DB::statement("SELECT setval(pg_get_serial_sequence('absen', 'id'), 1, false);");
             }
         } catch (\Throwable $e) {
             // ignore if DB not available or not pgsql

@@ -13,16 +13,45 @@ class UserRoleSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create roles
-        $adminRoleId = DB::table('roles')->insertGetId([
-            'role_name' => 'admin',
-        ]);
+        // Biar bisa di-seed berulang kali tanpa dobel data
+        DB::table('users')->delete();
+        DB::table('roles')->delete();
 
-        $userRoleId = DB::table('roles')->insertGetId([
-            'role_name' => 'user',
-        ]);
+        // Reset sequence supaya id mulai dari 1 lagi (PostgreSQL)
+        try {
+            if (DB::getDriverName() === 'pgsql') {
+                DB::statement("SELECT setval(pg_get_serial_sequence('roles', 'id'), 1, false);");
+                DB::statement("SELECT setval(pg_get_serial_sequence('users', 'id'), 1, false);");
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
 
-        // Create admin user (login menggunakan username)
+        $roleNames = [
+            'STAF',
+            'MANAGER',
+            'ADMIN',
+            'VP',
+            'ASS DIREKTUR OPERASI I',
+            'ASS DIREKTUR TEKNIK DAN PENGEMBANGAN',
+            'DIREKTUR TEKNIK DAN PENGEMBANGAN',
+            'DIREKTUR OPERASI II',
+            'DIREKTUR OPERASI I',
+            'DIREKTUR KEUANGAN, HC DAN MANRISK',
+            'DIREKTUR UTAMA',
+        ];
+
+        $adminRoleId = null;
+        foreach ($roleNames as $name) {
+            $id = DB::table('roles')->insertGetId([
+                'role_name' => $name,
+            ]);
+            if ($name === 'ADMIN') {
+                $adminRoleId = $id;
+            }
+        }
+
+        // Default admin user (login pakai username)
         DB::table('users')->insert([
             'username' => 'admin',
             'password' => Hash::make('admin123'),
@@ -31,20 +60,6 @@ class UserRoleSeeder extends Seeder
             'email' => null,
             'telp' => null,
             'role_id' => $adminRoleId,
-            'biro_id' => null,
-            'nip_atasan' => null,
-            'isdel' => 0,
-        ]);
-
-        // Create regular user (login menggunakan username)
-        DB::table('users')->insert([
-            'username' => 'user',
-            'password' => Hash::make('user123'),
-            'nama' => 'Regular User',
-            'nip' => '0002',
-            'email' => null,
-            'telp' => null,
-            'role_id' => $userRoleId,
             'biro_id' => null,
             'nip_atasan' => null,
             'isdel' => 0,
