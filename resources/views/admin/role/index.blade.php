@@ -49,7 +49,7 @@
             <thead>
               <tr>
                 <th>No</th>
-                <th>Role Name</th>
+                <th>Role</th>
                 <th>Aksi</th>
               </tr>
             </thead>

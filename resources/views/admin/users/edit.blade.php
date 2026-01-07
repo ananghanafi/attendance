@@ -20,7 +20,19 @@
       .btn.primary{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(89,102,247,0.18)}
       .error{margin:10px 0 0;color:#991b1b;background:#fff1f2;border:1px solid #fecdd3;padding:10px;border-radius:8px}
       a{color:inherit;text-decoration:none}
+      /* Select2 custom styling */
+      .select2-container{width:100%!important}
+      .select2-container .select2-selection--single{min-height:47px;height:47px;display:flex;align-items:center;padding:11px 12px;border:1px solid #eef0f6;border-radius:8px;background:#fff;font-size:14px;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;line-height:1.4}
+      .select2-container--default .select2-selection--single .select2-selection__arrow{height:100%;top:0;right:8px}
+      .select2-container--default .select2-selection--single .select2-selection__rendered{line-height:1.4;padding:0;font-family:inherit;color:#000}
+      .select2-container--default .select2-selection--single .select2-selection__placeholder{color:#9ca3af}
+      .select2-container--default.select2-container--focus .select2-selection--single{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color:var(--accent)}
+      .select2-dropdown{border:1px solid #eef0f6;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
+      .select2-search--dropdown .select2-search__field{padding:8px;border:1px solid #eef0f6;border-radius:6px;font-family:inherit;font-size:14px}
+      .select2-results__option{padding:8px 12px;font-family:inherit;font-size:14px}
+      .select2-container--default .select2-results__option--highlighted[aria-selected]{background:var(--accent);color:#fff}
     </style>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   </head>
   <body>
     <div class="wrap">
@@ -28,10 +40,10 @@
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
           <div>
             <h1 style="margin:0;font-size:20px">Edit User</h1>
-            <div style="color:var(--muted);font-size:12px">ID: {{ $row->id }}</div>
+            <div style="color:var(--muted);font-size:12px">Form untuk mengubah data user.</div>
           </div>
           <div>
-            <a href="{{ route('users.index') }}"><button type="button" class="btn">Kembali</button></a>
+            <a href="{{ route('settings.index') }}"><button type="button" class="btn">Kembali</button></a>
           </div>
         </div>
 
@@ -105,7 +117,7 @@
 
             <div>
               <label for="telp">No. Telp</label>
-              <input type="text" id="telp" name="telp" required maxlength="20" value="{{ old('telp', $row->telp) }}">
+              <input type="tel" id="telp" name="telp" required maxlength="20" value="{{ old('telp', $row->telp) }}" pattern="[0-9]+" title="Hanya angka yang diperbolehkan">
             </div>
 
             <div>
@@ -155,5 +167,24 @@
         </form>
       </div>
     </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+      $(document).ready(function() {
+        // Initialize Select2 on all select dropdowns
+        $('#role_id, #biro_id, #jabatan_id, #isdel, #is_pulang').select2({
+          placeholder: "Pilih...",
+          allowClear: false,
+          width: '100%'
+        });
+
+        // Auto-focus search field when dropdown opens
+        $(document).on('select2:open', () => {
+          setTimeout(() => {
+            document.querySelector('.select2-search__field').focus();
+          }, 100);
+        });
+      });
+    </script>
   </body>
 </html>

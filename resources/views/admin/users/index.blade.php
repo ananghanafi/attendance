@@ -18,7 +18,7 @@
       .grid{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
       input{padding:10px 12px;border-radius:10px;border:1px solid #eef0f6;min-width:260px}
       .tableScroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
-      .tableScroll table{min-width:900px}
+      .tableScroll table{width: 100%;}
       table{width:100%;border-collapse:collapse;margin-top:12px}
       th,td{padding:10px 8px;border-bottom:1px solid #eef0f6;text-align:left;font-size:14px;vertical-align:top}
       th{white-space:nowrap}

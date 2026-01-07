@@ -12,7 +12,7 @@
 .card,.sidebarCard{min-width:0;width:100%;max-width:100%}
 .card{overflow:hidden;background:#fff;border-radius:18px;border:1px solid #e7eaf3;box-shadow:0 10px 35px rgba(35,45,120,.08);padding:18px}
 .tableScroll{width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px}
-.tableScroll table{min-width:720px;width:720px;white-space:nowrap}
+.tableScroll table{min-width:720px;width:100%;white-space:nowrap}
 h2,.tab{overflow-wrap:anywhere;word-break:break-word}
 .sidebarCard{background:#fff;border-radius:18px;border:1px solid #e7eaf3;box-shadow:0 10px 35px rgba(35,45,120,.08);padding:12px}
 .side-title{font-size:12px;color:var(--text-muted);margin:0 0 10px}
@@ -25,7 +25,7 @@ h2,.tab{overflow-wrap:anywhere;word-break:break-word}
 .panel-header h2{margin:0;font-size:18px}
 .btn{padding:11px 14px;border-radius:12px;border:none;cursor:pointer;font-weight:800;background:#fff;border:1px solid #eef0f6}
 .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 6px 18px rgba(89,102,247,0.18)}
-table{width:100%;border-collapse:collapse}
+table{width:100%;border-collapse:collapse;table-layout:auto}
 th,td{padding:10px 8px;border-bottom:1px solid #eef1ff;text-align:left;font-size:14px;white-space:nowrap}
 th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
 .search-box{margin-bottom:16px}
@@ -69,7 +69,7 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
         </div>
 
         <div class="tableScroll">
-          <table id="tableUser">
+          <table id="tableUser" style="width:100%">
             <thead>
               <tr>
                 <th>No</th>
@@ -130,7 +130,7 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
         </div>
 
         <div class="tableScroll">
-          <table id="tableBiro">
+          <table id="tableBiro" style="width:100%">
             <thead>
               <tr>
                 <th>No</th>
@@ -187,7 +187,7 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
         </div>
 
         <div class="tableScroll">
-          <table id="tableJabatan">
+          <table id="tableJabatan" style="width:100%">
             <thead>
               <tr>
                 <th>No</th>
@@ -240,11 +240,11 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
         </div>
 
         <div class="tableScroll">
-          <table id="tableRole">
+          <table id="tableRole" style="width:100%">
             <thead>
               <tr>
                 <th>No</th>
-                <th>Role Name</th>
+                <th>Role</th>
                 <th>Aksi</th>
               </tr>
             </thead>
