@@ -62,9 +62,32 @@ class AdminUserController extends Controller
         ]);
     }
 
-    public function edit(int $id)
+    public function setEdit(Request $request)
     {
         $this->ensureAdmin();
+
+        $id = $request->input('id');
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'User tidak ditemukan');
+        }
+
+        // Store ID in session
+        $request->session()->put('editing_user_id', $id);
+
+        // Redirect to edit page (clean URL)
+        return redirect()->route('users.edit');
+    }
+
+    public function edit(Request $request)
+    {
+        $this->ensureAdmin();
+
+        // Get ID from session
+        $id = $request->session()->get('editing_user_id');
+        
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'User tidak ditemukan');
+        }
 
         $row = User::query()->findOrFail($id);
 
@@ -80,9 +103,16 @@ class AdminUserController extends Controller
         ]);
     }
 
-    public function update(Request $request, int $id)
+    public function update(Request $request)
     {
         $this->ensureAdmin();
+
+        // Get ID from session
+        $id = $request->session()->get('editing_user_id');
+        
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'User tidak ditemukan');
+        }
 
         $row = User::query()->findOrFail($id);
 
@@ -112,6 +142,11 @@ class AdminUserController extends Controller
         $validated['jabatan'] = DB::table('jabatan')->where('id', $validated['jabatan_id'])->value('jabatan');
         unset($validated['jabatan_id']);
 
+        // Normalize phone number to 628xxx format
+        if (!empty($validated['telp'])) {
+            $validated['telp'] = $this->normalizePhoneNumber($validated['telp']);
+        }
+
         // If password empty on edit: don't change it
         if (empty($validated['password'])) {
             unset($validated['password']);
@@ -120,17 +155,54 @@ class AdminUserController extends Controller
         $row->fill($validated);
         $row->save();
 
+        // Clear session after successful update
+        $request->session()->forget('editing_user_id');
+
         return redirect()->route('settings.index')->with('status', 'User berhasil diperbarui.');
     }
 
-    public function destroy(int $id)
+    public function destroy(Request $request)
     {
         $this->ensureAdmin();
+
+        // Get ID from request body (POST data, not URL)
+        $id = $request->input('id');
+        
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'User tidak ditemukan');
+        }
 
         $row = User::query()->findOrFail($id);
         $row->delete();
 
         return redirect()->route('settings.index')->with('status', 'User berhasil dihapus.');
+    }
+
+    /**
+     * Normalize phone number to 628xxx format
+     * 08xxx -> 628xxx
+     * 628xxx -> 628xxx (no change)
+     * +628xxx -> 628xxx
+     */
+    private function normalizePhoneNumber(string $phone): string
+    {
+        // Remove spaces, dashes, and other non-numeric characters except +
+        $phone = preg_replace('/[^\d+]/', '', $phone);
+        
+        // Remove leading + if exists
+        $phone = ltrim($phone, '+');
+        
+        // If starts with 08, replace with 628
+        if (preg_match('/^08/', $phone)) {
+            $phone = '628' . substr($phone, 2);
+        }
+        
+        // If starts with 8 (without 0), add 62
+        if (preg_match('/^8/', $phone)) {
+            $phone = '62' . $phone;
+        }
+        
+        return $phone;
     }
 
     private function dropdownData(): array
@@ -199,6 +271,11 @@ class AdminUserController extends Controller
             $validated['jabatan'] = DB::table('jabatan')->where('id', $validated['jabatan_id'])->value('jabatan');
         }
         unset($validated['jabatan_id']);
+
+        // Normalize phone number to 628xxx format
+        if (!empty($validated['telp'])) {
+            $validated['telp'] = $this->normalizePhoneNumber($validated['telp']);
+        }
 
         // Kolom-kolom ini diminta kosong (tidak muncul di form)
         $validated['id_kel'] = null;

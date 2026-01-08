@@ -57,9 +57,27 @@ class AdminMasterDataController extends Controller
         return redirect()->route('settings.index')->with('status', 'Biro berhasil ditambahkan.');
     }
 
-    public function biroEdit(int $id)
+    public function biroSetEdit(Request $request)
     {
         $this->ensureAdmin();
+
+        $id = $request->input('id');
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'Biro tidak ditemukan');
+        }
+
+        $request->session()->put('editing_biro_id', $id);
+        return redirect()->route('biro.edit');
+    }
+
+    public function biroEdit(Request $request)
+    {
+        $this->ensureAdmin();
+
+        $id = $request->session()->get('editing_biro_id');
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'Biro tidak ditemukan');
+        }
 
         $row = Biro::query()->findOrFail($id);
 
@@ -68,9 +86,14 @@ class AdminMasterDataController extends Controller
         ]);
     }
 
-    public function biroUpdate(Request $request, int $id)
+    public function biroUpdate(Request $request)
     {
         $this->ensureAdmin();
+
+        $id = $request->session()->get('editing_biro_id');
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'Biro tidak ditemukan');
+        }
 
         $row = Biro::query()->findOrFail($id);
 
@@ -86,12 +109,19 @@ class AdminMasterDataController extends Controller
         $row->fill($validated);
         $row->save();
 
+        $request->session()->forget('editing_biro_id');
+
         return redirect()->route('settings.index')->with('status', 'Biro berhasil diperbarui.');
     }
 
-    public function biroDestroy(int $id)
+    public function biroDestroy(Request $request)
     {
         $this->ensureAdmin();
+
+        $id = $request->input('id');
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'Biro tidak ditemukan');
+        }
 
         $row = Biro::query()->findOrFail($id);
         $row->delete();
@@ -134,9 +164,27 @@ class AdminMasterDataController extends Controller
         return redirect()->route('settings.index')->with('status', 'Jabatan berhasil ditambahkan.');
     }
 
-    public function jabatanEdit(int $id)
+    public function jabatanSetEdit(Request $request)
     {
         $this->ensureAdmin();
+
+        $id = $request->input('id');
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'Jabatan tidak ditemukan');
+        }
+
+        $request->session()->put('editing_jabatan_id', $id);
+        return redirect()->route('jabatan.edit');
+    }
+
+    public function jabatanEdit(Request $request)
+    {
+        $this->ensureAdmin();
+
+        $id = $request->session()->get('editing_jabatan_id');
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'Jabatan tidak ditemukan');
+        }
 
         $row = Jabatan::query()->findOrFail($id);
 
@@ -145,9 +193,14 @@ class AdminMasterDataController extends Controller
         ]);
     }
 
-    public function jabatanUpdate(Request $request, int $id)
+    public function jabatanUpdate(Request $request)
     {
         $this->ensureAdmin();
+
+        $id = $request->session()->get('editing_jabatan_id');
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'Jabatan tidak ditemukan');
+        }
 
         $row = Jabatan::query()->findOrFail($id);
 
@@ -161,12 +214,19 @@ class AdminMasterDataController extends Controller
         $row->fill($validated);
         $row->save();
 
+        $request->session()->forget('editing_jabatan_id');
+
         return redirect()->route('settings.index')->with('status', 'Jabatan berhasil diperbarui.');
     }
 
-    public function jabatanDestroy(int $id)
+    public function jabatanDestroy(Request $request)
     {
         $this->ensureAdmin();
+
+        $id = $request->input('id');
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'Jabatan tidak ditemukan');
+        }
 
         $row = Jabatan::query()->findOrFail($id);
         $row->delete();
@@ -208,9 +268,27 @@ class AdminMasterDataController extends Controller
         return redirect()->route('settings.index')->with('status', 'Role berhasil ditambahkan.');
     }
 
-    public function roleEdit(int $id)
+    public function roleSetEdit(Request $request)
     {
         $this->ensureAdmin();
+
+        $id = $request->input('id');
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'Role tidak ditemukan');
+        }
+
+        $request->session()->put('editing_role_id', $id);
+        return redirect()->route('role.edit');
+    }
+
+    public function roleEdit(Request $request)
+    {
+        $this->ensureAdmin();
+
+        $id = $request->session()->get('editing_role_id');
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'Role tidak ditemukan');
+        }
 
         $row = Role::query()->findOrFail($id);
 
@@ -219,9 +297,14 @@ class AdminMasterDataController extends Controller
         ]);
     }
 
-    public function roleUpdate(Request $request, int $id)
+    public function roleUpdate(Request $request)
     {
         $this->ensureAdmin();
+
+        $id = $request->session()->get('editing_role_id');
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'Role tidak ditemukan');
+        }
 
         $row = Role::query()->findOrFail($id);
 
@@ -234,12 +317,19 @@ class AdminMasterDataController extends Controller
         $row->fill($validated);
         $row->save();
 
+        $request->session()->forget('editing_role_id');
+
         return redirect()->route('settings.index')->with('status', 'Role berhasil diperbarui.');
     }
 
-    public function roleDestroy(int $id)
+    public function roleDestroy(Request $request)
     {
         $this->ensureAdmin();
+
+        $id = $request->input('id');
+        if (!$id) {
+            return redirect()->route('settings.index')->with('error', 'Role tidak ditemukan');
+        }
 
         $row = Role::query()->findOrFail($id);
         $row->delete();

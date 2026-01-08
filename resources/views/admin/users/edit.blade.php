@@ -55,7 +55,7 @@
           <div class="error">{{ $errors->first() }}</div>
         @endif
 
-        <form method="POST" action="{{ route('users.update', ['id' => $row->id]) }}" style="margin-top:14px">
+        <form method="POST" action="{{ route('users.update') }}" style="margin-top:14px">
           @csrf
           @method('PUT')
 
@@ -117,7 +117,8 @@
 
             <div>
               <label for="telp">No. Telp</label>
-              <input type="tel" id="telp" name="telp" required maxlength="20" value="{{ old('telp', $row->telp) }}" pattern="[0-9]+" title="Hanya angka yang diperbolehkan">
+              <input type="tel" id="telp" name="telp" required maxlength="20" value="{{ old('telp', $row->telp) }}" pattern="[0-9]+" title="Hanya angka yang diperbolehkan" placeholder="08xx atau 628xx">
+              <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Format otomatis ke 628xxx (08xxx akan diubah ke 628xxx)</div>
             </div>
 
             <div>

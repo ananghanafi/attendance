@@ -38,7 +38,7 @@
           <div class="error">{{ $errors->first() }}</div>
         @endif
 
-        <form method="POST" action="{{ route('biro.update', ['id' => $row->id]) }}">
+        <form method="POST" action="{{ route('biro.update') }}">
           @csrf
           @method('PUT')
 

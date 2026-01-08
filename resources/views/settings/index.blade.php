@@ -92,12 +92,15 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
                   <td>{{ $u->biro_name }}</td>
                   <td>
                     <div style="display:flex;gap:6px;align-items:center">
-                      <a href="{{ route('users.edit', ['id' => $u->id]) }}" style="text-decoration:none">
-                        <button type="button" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
-                      </a>
-                      <form method="POST" action="{{ route('users.destroy', ['id' => $u->id]) }}" onsubmit="return confirm('Yakin hapus user ini?');" style="margin:0">
+                      <form method="POST" action="{{ route('users.setEdit') }}" style="margin:0">
+                        @csrf
+                        <input type="hidden" name="id" value="{{ $u->id }}">
+                        <button type="submit" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
+                      </form>
+                      <form method="POST" action="{{ route('users.destroy') }}" onsubmit="return confirm('Yakin hapus user ini?');" style="margin:0">
                         @csrf
                         @method('DELETE')
+                        <input type="hidden" name="id" value="{{ $u->id }}">
                         <button type="submit" class="btn" style="padding:8px 10px;background:#fff1f2;color:#991b1b;border-color:#fecdd3;white-space:nowrap">Hapus</button>
                       </form>
                     </div>
@@ -149,12 +152,15 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
                   <td>{{ $b->is_proyek ? 'Ya' : 'Tidak' }}</td>
                   <td>
                     <div style="display:flex;gap:6px;align-items:center">
-                      <a href="{{ route('biro.edit', ['id' => $b->id]) }}" style="text-decoration:none">
-                        <button type="button" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
-                      </a>
-                      <form method="POST" action="{{ route('biro.destroy', ['id' => $b->id]) }}" onsubmit="return confirm('Yakin hapus biro ini?');" style="margin:0">
+                      <form method="POST" action="{{ route('biro.setEdit') }}" style="margin:0">
+                        @csrf
+                        <input type="hidden" name="id" value="{{ $b->id }}">
+                        <button type="submit" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
+                      </form>
+                      <form method="POST" action="{{ route('biro.destroy') }}" onsubmit="return confirm('Yakin hapus biro ini?');" style="margin:0">
                         @csrf
                         @method('DELETE')
+                        <input type="hidden" name="id" value="{{ $b->id }}">
                         <button type="submit" class="btn" style="padding:8px 10px;background:#fff1f2;color:#991b1b;border-color:#fecdd3;white-space:nowrap">Hapus</button>
                       </form>
                     </div>
@@ -202,12 +208,15 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
                   <td>{{ $j->jabatan }}</td>
                   <td>
                     <div style="display:flex;gap:6px;align-items:center">
-                      <a href="{{ route('jabatan.edit', ['id' => $j->id]) }}" style="text-decoration:none">
-                        <button type="button" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
-                      </a>
-                      <form method="POST" action="{{ route('jabatan.destroy', ['id' => $j->id]) }}" onsubmit="return confirm('Yakin hapus jabatan ini?');" style="margin:0">
+                      <form method="POST" action="{{ route('jabatan.setEdit') }}" style="margin:0">
+                        @csrf
+                        <input type="hidden" name="id" value="{{ $j->id }}">
+                        <button type="submit" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
+                      </form>
+                      <form method="POST" action="{{ route('jabatan.destroy') }}" onsubmit="return confirm('Yakin hapus jabatan ini?');" style="margin:0">
                         @csrf
                         @method('DELETE')
+                        <input type="hidden" name="id" value="{{ $j->id }}">
                         <button type="submit" class="btn" style="padding:8px 10px;background:#fff1f2;color:#991b1b;border-color:#fecdd3;white-space:nowrap">Hapus</button>
                       </form>
                     </div>
@@ -255,12 +264,15 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
                   <td>{{ $r->role_name }}</td>
                   <td>
                     <div style="display:flex;gap:6px;align-items:center">
-                      <a href="{{ route('role.edit', ['id' => $r->id]) }}" style="text-decoration:none">
-                        <button type="button" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
-                      </a>
-                      <form method="POST" action="{{ route('role.destroy', ['id' => $r->id]) }}" onsubmit="return confirm('Yakin hapus role ini?');" style="margin:0">
+                      <form method="POST" action="{{ route('role.setEdit') }}" style="margin:0">
+                        @csrf
+                        <input type="hidden" name="id" value="{{ $r->id }}">
+                        <button type="submit" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
+                      </form>
+                      <form method="POST" action="{{ route('role.destroy') }}" onsubmit="return confirm('Yakin hapus role ini?');" style="margin:0">
                         @csrf
                         @method('DELETE')
+                        <input type="hidden" name="id" value="{{ $r->id }}">
                         <button type="submit" class="btn" style="padding:8px 10px;background:#fff1f2;color:#991b1b;border-color:#fecdd3;white-space:nowrap">Hapus</button>
                       </form>
                     </div>

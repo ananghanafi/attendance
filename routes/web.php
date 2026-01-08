@@ -29,34 +29,38 @@ Route::middleware('auth')->group(function () {
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
     Route::get('/addusers', [AdminUserController::class, 'create'])->name('users.create');
     Route::post('/addusers', [AdminUserController::class, 'store'])->name('users.store');
-    Route::get('/users/{id}/edit', [AdminUserController::class, 'edit'])->name('users.edit');
-    Route::put('/users/{id}', [AdminUserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{id}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+    Route::post('/users/set-edit', [AdminUserController::class, 'setEdit'])->name('users.setEdit');
+    Route::get('/users/edit', [AdminUserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/update', [AdminUserController::class, 'update'])->name('users.update');
+    Route::delete('/users/delete', [AdminUserController::class, 'destroy'])->name('users.destroy');
 
     // Master data (admin-only via controller)
     // Biro
     Route::get('/biro', [AdminMasterDataController::class, 'biroIndex'])->name('biro.index');
     Route::get('/biro/create', [AdminMasterDataController::class, 'biroCreate'])->name('biro.create');
     Route::post('/biro', [AdminMasterDataController::class, 'biroStore'])->name('biro.store');
-    Route::get('/biro/{id}/edit', [AdminMasterDataController::class, 'biroEdit'])->name('biro.edit');
-    Route::put('/biro/{id}', [AdminMasterDataController::class, 'biroUpdate'])->name('biro.update');
-    Route::delete('/biro/{id}', [AdminMasterDataController::class, 'biroDestroy'])->name('biro.destroy');
+    Route::post('/biro/set-edit', [AdminMasterDataController::class, 'biroSetEdit'])->name('biro.setEdit');
+    Route::get('/biro/edit', [AdminMasterDataController::class, 'biroEdit'])->name('biro.edit');
+    Route::put('/biro/update', [AdminMasterDataController::class, 'biroUpdate'])->name('biro.update');
+    Route::delete('/biro/delete', [AdminMasterDataController::class, 'biroDestroy'])->name('biro.destroy');
 
     // Jabatan
     Route::get('/jabatan', [AdminMasterDataController::class, 'jabatanIndex'])->name('jabatan.index');
     Route::get('/jabatan/create', [AdminMasterDataController::class, 'jabatanCreate'])->name('jabatan.create');
     Route::post('/jabatan', [AdminMasterDataController::class, 'jabatanStore'])->name('jabatan.store');
-    Route::get('/jabatan/{id}/edit', [AdminMasterDataController::class, 'jabatanEdit'])->name('jabatan.edit');
-    Route::put('/jabatan/{id}', [AdminMasterDataController::class, 'jabatanUpdate'])->name('jabatan.update');
-    Route::delete('/jabatan/{id}', [AdminMasterDataController::class, 'jabatanDestroy'])->name('jabatan.destroy');
+    Route::post('/jabatan/set-edit', [AdminMasterDataController::class, 'jabatanSetEdit'])->name('jabatan.setEdit');
+    Route::get('/jabatan/edit', [AdminMasterDataController::class, 'jabatanEdit'])->name('jabatan.edit');
+    Route::put('/jabatan/update', [AdminMasterDataController::class, 'jabatanUpdate'])->name('jabatan.update');
+    Route::delete('/jabatan/delete', [AdminMasterDataController::class, 'jabatanDestroy'])->name('jabatan.destroy');
 
     // Role
     Route::get('/role', [AdminMasterDataController::class, 'roleIndex'])->name('role.index');
     Route::get('/role/create', [AdminMasterDataController::class, 'roleCreate'])->name('role.create');
     Route::post('/role', [AdminMasterDataController::class, 'roleStore'])->name('role.store');
-    Route::get('/role/{id}/edit', [AdminMasterDataController::class, 'roleEdit'])->name('role.edit');
-    Route::put('/role/{id}', [AdminMasterDataController::class, 'roleUpdate'])->name('role.update');
-    Route::delete('/role/{id}', [AdminMasterDataController::class, 'roleDestroy'])->name('role.destroy');
+    Route::post('/role/set-edit', [AdminMasterDataController::class, 'roleSetEdit'])->name('role.setEdit');
+    Route::get('/role/edit', [AdminMasterDataController::class, 'roleEdit'])->name('role.edit');
+    Route::put('/role/update', [AdminMasterDataController::class, 'roleUpdate'])->name('role.update');
+    Route::delete('/role/delete', [AdminMasterDataController::class, 'roleDestroy'])->name('role.destroy');
 
     // Kalender Kerja (URL netral, akses tetap dibatasi di controller)
     Route::get('/kalender-kerja', [AdminKalenderKerjaController::class, 'index'])->name('admin.kalender');

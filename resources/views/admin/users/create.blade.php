@@ -117,6 +117,7 @@
             <div>
               <label for="telp">No. Telp</label>
               <input type="tel" id="telp" name="telp" required maxlength="20" value="{{ old('telp') }}" pattern="[0-9]+" title="Hanya angka yang diperbolehkan">
+              <div style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
             </div>
 
             <div>
