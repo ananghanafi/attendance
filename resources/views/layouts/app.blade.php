@@ -93,6 +93,7 @@ body{font-family:Inter,system-ui,Arial;background:var(--bg);font-size:17px;color
 @php $role = session("role_name") ?? ""; @endphp
 @if(in_array($role, ["admin", "ADMIN"], true))
 <a href="{{ route("admin.kalender") }}" class="sidebar-item @if(request()->routeIs("admin.kalender*") || request()->routeIs("kalender.*")) active @endif"><span class="icon">📅</span><span class="text">Kalender Kerja</span></a>
+<a href="{{ route("pengajuan.index") }}" class="sidebar-item @if(request()->routeIs("pengajuan.*")) active @endif"><span class="icon">📋</span><span class="text">Pengajuan WFO</span></a>
 <a href="{{ route("settings.index") }}" class="sidebar-item @if(request()->routeIs("settings.*") || request()->routeIs("users.*") || request()->routeIs("biro.*") || request()->routeIs("jabatan.*") || request()->routeIs("role.*")) active @endif"><span class="icon">⚙️</span><span class="text">Setting User</span></a>
 @endif
 </div>

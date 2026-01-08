@@ -144,7 +144,7 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
           </div>
 
               <div class="tableScroll">
-              <table id="tableKalender" width="100%">
+              <table id="tableKalender" width="100%"  >
                 <thead>
                   <tr>
                     <th>No</th>

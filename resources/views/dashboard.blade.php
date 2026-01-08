@@ -429,6 +429,11 @@
 
       <div class="grid">
         @if(in_array(($role ?? ''), ['admin', 'ADMIN'], true))
+          <a class="tile" href="{{ route('pengajuan.index') }}">
+            <div class="t">📋 Pengajuan WFO</div>
+            <div class="d">Kelola pengajuan work from office dan work from anywhere dari semua biro.</div>
+          </a>
+
           <a class="tile" href="{{ route('admin.kalender') }}">
             <div class="t">Kalender Kerja</div>
             <div class="d">Input periode (minggu Senin–Minggu) dan lihat data kalender kerja.</div>
@@ -439,11 +444,6 @@
             <div class="d">Kelola user, biro, jabatan, dan role dalam satu tempat.</div>
           </a>
         @endif
-
-        <a class="tile" href="#" onclick="return false;">
-          <div class="t">(Coming soon) Fitur lainnya</div>
-          <div class="d">Nanti bisa ditambah menu lain di sini (absensi, izin, dsb.).</div>
-        </a>
       </div>
     </div>
 

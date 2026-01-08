@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminKalenderKerjaController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AdminMasterDataController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\PengajuanWfoController;
 
 // Landing page -> tunjukkan login form langsung
 Route::get('/', [AuthController::class, 'showLoginForm']);
@@ -72,4 +73,10 @@ Route::middleware('auth')->group(function () {
 
     // Hapus Kalender Kerja
     Route::delete('/kalender-kerja/{id}', [AdminKalenderKerjaController::class, 'destroy'])->name('kalender.destroy');
+
+    // Pengajuan WFO
+    Route::get('/pengajuan-wfo', [PengajuanWfoController::class, 'index'])->name('pengajuan.index');
+    Route::get('/pengajuan-wfo/{id}', [PengajuanWfoController::class, 'show'])->name('pengajuan.show');
+    Route::get('/pengajuan-wfo/{id}/edit', [PengajuanWfoController::class, 'edit'])->name('pengajuan.edit');
+    Route::put('/pengajuan-wfo/{id}', [PengajuanWfoController::class, 'update'])->name('pengajuan.update');
 });

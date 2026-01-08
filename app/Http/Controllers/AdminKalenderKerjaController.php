@@ -69,6 +69,84 @@ class AdminKalenderKerjaController extends Controller
             'active' => false,
         ]);
 
+        // Get the created kalender ID
+        $kalenderId = DB::table('kalender_kerja_v2')
+            ->where('kalender', $kalenderDb)
+            ->value('id');
+
+        // Auto-create pengajuan WFO untuk semua biro (is_proyek = false)
+        $biros = DB::table('biro')
+            ->where('is_proyek', false)
+            ->get(['id', 'biro_name']);
+
+        foreach ($biros as $biro) {
+            // Check if pengajuan already exists untuk biro + kalender ini
+            $exists = DB::table('pengajuan_wao')
+                ->where('biro_id', $biro->id)
+                ->where('kalender', $kalenderDb) // Simpan format "minggu-bulan-tahun"
+                ->exists();
+
+            if (!$exists) {
+                // Create pengajuan WFO
+                $pengajuanId = DB::table('pengajuan_wao')->insertGetId([
+                    'biro_id' => $biro->id,
+                    'kalender' => $kalenderDb, // Simpan format "minggu-bulan-tahun"
+                    'status' => 'pending',
+                    'created_date' => now(),
+                ]);
+
+                // Get all users from this biro
+                $users = DB::table('users')
+                    ->where('biro_id', $biro->id)
+                    ->get(['nip']);
+
+                // Create detail records for each user (default: all WFA = false means WFO)
+                foreach ($users as $user) {
+                    DB::table('pengajuan_wao_detail')->insert([
+                        'pengajuan_id' => $pengajuanId,
+                        'nip' => $user->nip,
+                        'senin' => false,
+                        'selasa' => false,
+                        'rabu' => false,
+                        'kamis' => false,
+                        'jumat' => false,
+                    ]);
+                }
+            }
+        }
+
+        // Auto-delete old pengajuan: hapus pengajuan minggu 1 bulan lama saat input minggu 1 bulan baru
+        if ($data['minggu'] == 1) {
+            // Get previous month's week 1 kalender
+            $prevMonth = $data['bulan'] - 1;
+            $prevYear = $data['tahun'];
+            if ($prevMonth < 1) {
+                $prevMonth = 12;
+                $prevYear--;
+            }
+            
+            $oldKalender = sprintf('1-%d-%d', $prevMonth, $prevYear);
+            
+            // Delete pengajuan details first (berdasarkan kalender format "minggu-bulan-tahun")
+            DB::table('pengajuan_wao_detail')
+                ->whereIn('pengajuan_id', function($query) use ($oldKalender) {
+                    $query->select('id')
+                        ->from('pengajuan_wao')
+                        ->where('kalender', $oldKalender);
+                })
+                ->delete();
+            
+            // Delete pengajuan master
+            DB::table('pengajuan_wao')
+                ->where('kalender', $oldKalender)
+                ->delete();
+            
+            // Optionally delete old kalender_kerja_v2 too
+            DB::table('kalender_kerja_v2')
+                ->where('kalender', $oldKalender)
+                ->delete();
+        }
+
         // data tanggal maks 10
         $count = KalenderKerjaV2::query()->count();
         if ($count > 10) {
@@ -142,6 +220,35 @@ class AdminKalenderKerjaController extends Controller
         $this->ensureAdmin();
 
         $row = KalenderKerjaV2::query()->findOrFail($id);
+        
+        // Get kalender string untuk delete pengajuan
+        $kalenderString = $row->kalender; // format "minggu-bulan-tahun"
+        
+        // Cascade delete: hapus pengajuan WFO yang terkait dengan kalender ini
+        // 1. Hapus detail tanggal dulu
+        DB::table('pengajuan_wao_detail_tanggal')
+            ->whereIn('pengajuan_id', function($query) use ($kalenderString) {
+                $query->select('id')
+                    ->from('pengajuan_wao')
+                    ->where('kalender', $kalenderString);
+            })
+            ->delete();
+        
+        // 2. Hapus detail dulu
+        DB::table('pengajuan_wao_detail')
+            ->whereIn('pengajuan_id', function($query) use ($kalenderString) {
+                $query->select('id')
+                    ->from('pengajuan_wao')
+                    ->where('kalender', $kalenderString);
+            })
+            ->delete();
+        
+        // 3. Hapus master pengajuan
+        DB::table('pengajuan_wao')
+            ->where('kalender', $kalenderString)
+            ->delete();
+        
+        // 4. Hapus kalender
         $row->delete();
 
         return redirect()->route('admin.kalender')->with('status', 'Data kalender kerja berhasil dihapus.');
