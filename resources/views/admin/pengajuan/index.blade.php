@@ -7,8 +7,9 @@
 .card{background:#fff;border-radius:18px;border:1px solid #e7eaf3;box-shadow:0 10px 35px rgba(35,45,120,.08);padding:24px}
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:16px}
 .header h1{font-size:24px;font-weight:700;margin:0}
-.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
-.filter-group{display:flex;flex-direction:column;gap:6px}
+.filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;align-items:flex-end}
+.filter-group{display:flex;flex-direction:column;gap:6px;min-width:180px;flex:1}
+.filter-group.buttons{flex-direction:row;min-width:auto;flex:0;gap:8px}
 .filter-group label{font-size:12px;color:var(--text-muted);font-weight:500}
 .filter-group input,.filter-group select{padding:10px 12px;border:1px solid #eef0f6;border-radius:10px;font-size:14px;outline:none;background:#fff}
 .filter-group input:focus,.filter-group select:focus{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color:var(--primary)}
@@ -111,7 +112,7 @@ tr:hover{background:#f9fafb}
         </select>
       </div>
       
-      <div class="filter-group" style="display:flex; align-items:flex-end; gap:8px;">
+      <div class="filter-group buttons">
         <button type="submit" class="btn primary" style="padding:11px 20px;">
           Filter
         </button>
@@ -153,15 +154,23 @@ tr:hover{background:#f9fafb}
             <td>{{ $p->tgl_akhir ? \Carbon\Carbon::parse($p->tgl_akhir)->format('d-M-Y') : '-' }}</td>
             <td>{{ ($p->persentase_decimal ?? 0) . '%' }}</td>
             <td style="text-align:center">
-              @if(strtolower($p->status ?? '') == 'close')
+              @if(strtolower($p->status ?? '') == 'final')
                 <span class="badge success">Close</span>
               @else
-                <span class="badge warning">Close</span>
+                <span class="badge warning">Open</span>
               @endif
             </td>
             <td style="text-align:center">
-              <a href="{{ route('pengajuan.show', $p->id) }}" class="btn secondary" style="padding:8px 16px">View</a>
-              <a href="{{ route('pengajuan.edit', $p->id) }}" class="btn primary" style="padding:8px 16px">Edit</a>
+              <form action="{{ route('pengajuan.setView') }}" method="POST" style="display:inline">
+                @csrf
+                <input type="hidden" name="id" value="{{ $p->id }}">
+                <button type="submit" class="btn secondary" style="padding:8px 16px">View</button>
+              </form>
+              <form action="{{ route('pengajuan.setEdit') }}" method="POST" style="display:inline">
+                @csrf
+                <input type="hidden" name="id" value="{{ $p->id }}">
+                <button type="submit" class="btn primary" style="padding:8px 16px">Edit</button>
+              </form>
             </td>
           </tr>
         @empty

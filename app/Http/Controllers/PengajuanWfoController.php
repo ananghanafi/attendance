@@ -116,11 +116,26 @@ class PengajuanWfoController extends Controller
     }
 
     /**
-     * View detail pengajuan (untuk edit absensi)
+     * Set session untuk view pengajuan
      */
-    public function show($id)
+    public function setView(Request $request)
     {
         $this->ensureAdmin();
+        session(['pengajuan_id' => $request->input('id')]);
+        return redirect()->route('pengajuan.show');
+    }
+
+    /**
+     * View detail pengajuan (untuk lihat absensi) - read only
+     */
+    public function show()
+    {
+        $this->ensureAdmin();
+
+        $id = session('pengajuan_id');
+        if (!$id) {
+            return redirect()->route('pengajuan.index')->with('error', 'Silakan pilih pengajuan dari daftar');
+        }
 
         // Get pengajuan master
         // JOIN langsung via kolom kalender yang sama format "minggu-bulan-tahun"
@@ -204,11 +219,26 @@ class PengajuanWfoController extends Controller
     }
 
     /**
-     * Edit pengajuan (form untuk edit WFO/WFA)
+     * Set session untuk edit pengajuan
      */
-    public function edit($id)
+    public function setEdit(Request $request)
     {
         $this->ensureAdmin();
+        session(['pengajuan_id' => $request->input('id')]);
+        return redirect()->route('pengajuan.edit');
+    }
+
+    /**
+     * Edit pengajuan (form untuk edit WFO/WFA)
+     */
+    public function edit()
+    {
+        $this->ensureAdmin();
+
+        $id = session('pengajuan_id');
+        if (!$id) {
+            return redirect()->route('pengajuan.index')->with('error', 'Silakan pilih pengajuan dari daftar');
+        }
 
         // Get pengajuan master
         // JOIN langsung via kolom kalender yang sama format "minggu-bulan-tahun"
@@ -290,9 +320,14 @@ class PengajuanWfoController extends Controller
     /**
      * Update pengajuan WFO/WFA per pegawai
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
         $this->ensureAdmin();
+
+        $id = session('pengajuan_id');
+        if (!$id) {
+            return redirect()->route('pengajuan.index')->with('error', 'Silakan pilih pengajuan dari daftar');
+        }
 
         try {
             DB::beginTransaction();
@@ -302,7 +337,7 @@ class PengajuanWfoController extends Controller
             $pengajuan = DB::table('pengajuan_wao as pw')
                 ->leftJoin('kalender_kerja_v2 as kk', 'pw.kalender', '=', 'kk.kalender')
                 ->where('pw.id', $id)
-                ->select(['pw.*', 'kk.tgl_awal', 'kk.tgl_akhir'])
+                ->select(['pw.*', 'kk.tgl_awal', 'kk.tgl_akhir', 'kk.persentase_decimal'])
                 ->first();
                 
             if (!$pengajuan) {
@@ -311,6 +346,34 @@ class PengajuanWfoController extends Controller
 
             // Get attendance data from request
             $attendance = $request->input('attendance', []);
+            
+            // Get total pegawai
+            $totalPegawai = count($attendance);
+            $maxPersentase = $pengajuan->persentase_decimal ?? 100;
+            
+            // Validasi persentase WFO per hari tidak melebihi batas
+            if ($totalPegawai > 0) {
+                $days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat'];
+                $dayNames = ['senin' => 'Senin', 'selasa' => 'Selasa', 'rabu' => 'Rabu', 'kamis' => 'Kamis', 'jumat' => 'Jumat'];
+                
+                foreach ($days as $day) {
+                    $wfoCount = 0;
+                    foreach ($attendance as $nip => $dayData) {
+                        if (isset($dayData[$day]) && $dayData[$day]) {
+                            $wfoCount++;
+                        }
+                    }
+                    
+                    $wfoPercentage = ($wfoCount / $totalPegawai) * 100;
+                    
+                    if ($wfoPercentage > $maxPersentase) {
+                        DB::rollBack();
+                        return redirect()->back()
+                            ->with('error', "Persentase WFO hari {$dayNames[$day]} ({$wfoCount}/{$totalPegawai} = " . round($wfoPercentage) . "%) melebihi batas maksimal {$maxPersentase}%")
+                            ->withInput();
+                    }
+                }
+            }
             
             // Calculate dates for each day (Senin-Jumat) from tgl_awal
             $tglAwal = $pengajuan->tgl_awal ? new \DateTime($pengajuan->tgl_awal) : null;
@@ -373,10 +436,15 @@ class PengajuanWfoController extends Controller
                     }
                 }
             }
+            
+            // Update status pengajuan_wao dari 'draft' menjadi 'final' setelah edit
+            DB::table('pengajuan_wao')
+                ->where('id', $id)
+                ->update(['status' => 'final']);
 
             DB::commit();
 
-            return redirect()->route('pengajuan.edit', $id)->with('success', 'Pengajuan berhasil diperbarui');
+            return redirect()->route('pengajuan.edit')->with('success', 'Pengajuan berhasil diperbarui');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());

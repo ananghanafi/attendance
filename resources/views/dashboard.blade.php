@@ -1,523 +1,108 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard</title>
-    <style>
-      :root{
-        --topbar-height:70px;
-        --sidebar-width:260px;
-        --sidebar-collapsed:70px;
-        --primary:#5966f7;
-        --primary-dark:#4854d8;
-        --bg:#f4f7fa;
-        --text:#1f2937;
-        --text-muted:#6b7280;
-      }
-      *{box-sizing:border-box;margin:0;padding:0}
-      body{font-family:Inter,system-ui,Arial;background:var(--bg);font-size:17px;color:var(--text)}
-      
-      /* Topbar */
-      .topbar{
-        position:fixed;
-        top:0;
-        left:0;
-        right:0;
-        height:var(--topbar-height);
-        background:var(--primary);
-        color:#fff;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        padding:0 32px;
-        box-shadow:0 4px 12px rgba(89,102,247,0.15);
-        z-index:100;
-      }
-      .topbar .brand{
-        font-size:22px;
-        font-weight:700;
-        letter-spacing:-0.02em;
-        display:flex;
-        align-items:center;
-        gap:16px;
-      }
-      .hamburger{
-        width:36px;
-        height:36px;
-        background:rgba(255,255,255,0.15);
-        border:none;
-        border-radius:8px;
-        cursor:pointer;
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        justify-content:center;
-        gap:5px;
-        transition:all 0.2s ease;
-      }
-      .hamburger:hover{
-        background:rgba(255,255,255,0.25);
-      }
-      .hamburger span{
-        display:block;
-        width:20px;
-        height:2.5px;
-        background:#fff;
-        border-radius:2px;
-        transition:all 0.3s ease;
-      }
-      .hamburger.active span:nth-child(1){
-        transform:rotate(45deg) translate(6px, 6px);
-      }
-      .hamburger.active span:nth-child(2){
-        opacity:0;
-      }
-      .hamburger.active span:nth-child(3){
-        transform:rotate(-45deg) translate(6px, -6px);
-      }
-      .topbar .right{
-        display:flex;
-        align-items:center;
-        gap:20px;
-      }
-      .topbar .profile{
-        position:relative;
-        display:flex;
-        align-items:center;
-        gap:12px;
-        padding:8px 14px;
-        background:rgba(255,255,255,0.15);
-        border-radius:10px;
-        transition:all 0.2s ease;
-        cursor:pointer;
-      }
-      .topbar .profile:hover{
-        background:rgba(255,255,255,0.25);
-      }
-      .topbar .profile-avatar{
-        width:40px;
-        height:40px;
-        border-radius:50%;
-        background:rgba(255,255,255,0.3);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-weight:700;
-        font-size:18px;
-        color:#fff;
-        border:2px solid rgba(255,255,255,0.5);
-      }
-      .topbar .profile-info{
-        display:flex;
-        flex-direction:column;
-        gap:2px;
-      }
-      .topbar .profile-name{
-        font-size:16px;
-        font-weight:600;
-        line-height:1.2;
-      }
-      .topbar .profile-role{
-        font-size:13px;
-        opacity:0.85;
-      }
-      .profile-dropdown{
-        position:absolute;
-        top:calc(100% + 8px);
-        right:0;
-        min-width:220px;
-        background:#fff;
-        border-radius:10px;
-        box-shadow:0 8px 24px rgba(0,0,0,0.15);
-        opacity:0;
-        visibility:hidden;
-        transform:translateY(-10px);
-        transition:all 0.2s ease;
-        z-index:200;
-      }
-      .profile.active .profile-dropdown{
-        opacity:1;
-        visibility:visible;
-        transform:translateY(0);
-      }
-      .profile-dropdown-header{
-        padding:16px;
-        border-bottom:1px solid #e5e7eb;
-      }
-      .profile-dropdown-name{
-        font-size:16px;
-        font-weight:600;
-        color:var(--text);
-        margin-bottom:4px;
-      }
-      .profile-dropdown-role{
-        font-size:14px;
-        color:var(--text-muted);
-      }
-      .profile-dropdown-menu{
-        padding:8px;
-      }
-      .profile-dropdown-item{
-        display:flex;
-        align-items:center;
-        gap:12px;
-        width:100%;
-        padding:12px 14px;
-        background:none;
-        border:none;
-        border-radius:8px;
-        color:var(--text);
-        font-size:15px;
-        font-weight:500;
-        text-align:left;
-        cursor:pointer;
-        transition:all 0.2s ease;
-      }
-      .profile-dropdown-item:hover{
-        background:#f3f4f6;
-      }
-      .profile-dropdown-item.logout{
-        color:#dc2626;
-      }
-      .profile-dropdown-item.logout:hover{
-        background:#fef2f2;
-      }
+@extends('layouts.app')
 
-      /* Sidebar */
-      .sidebar{
-        position:fixed;
-        top:var(--topbar-height);
-        left:0;
-        width:var(--sidebar-width);
-        height:calc(100vh - var(--topbar-height));
-        background:#fff;
-        box-shadow:2px 0 12px rgba(0,0,0,0.05);
-        overflow-y:auto;
-        overflow-x:hidden;
-        z-index:50;
-        transition:width 0.3s ease, transform 0.3s ease;
-      }
-      .sidebar.collapsed{
-        width:var(--sidebar-collapsed);
-      }
-      .sidebar-menu{
-        padding:20px 0;
-      }
-      .sidebar-item{
-        display:flex;
-        align-items:center;
-        gap:12px;
-        padding:14px 24px;
-        color:var(--text);
-        text-decoration:none;
-        font-size:16px;
-        font-weight:500;
-        transition:all 0.2s ease;
-        border-left:3px solid transparent;
-        white-space:nowrap;
-      }
-      .sidebar.collapsed .sidebar-item{
-        padding:14px 20px;
-        justify-content:center;
-      }
-      .sidebar-item .icon{
-        font-size:20px;
-        min-width:24px;
-        text-align:center;
-      }
-      .sidebar-item .text{
-        transition:opacity 0.2s ease;
-      }
-      .sidebar.collapsed .sidebar-item .text{
-        opacity:0;
-        width:0;
-        overflow:hidden;
-      }
-      .sidebar-item:hover{
-        background:#f3f4f6;
-        border-left-color:var(--primary);
-        color:var(--primary);
-      }
-      .sidebar-item.active{
-        background:#eef2ff;
-        border-left-color:var(--primary);
-        color:var(--primary);
-        font-weight:600;
-      }
+@section('title', 'Dashboard')
 
-      /* Main Content */
-      .main{
-        margin-left:var(--sidebar-width);
-        margin-top:var(--topbar-height);
-        padding:32px;
-        min-height:calc(100vh - var(--topbar-height));
-        transition:margin-left 0.3s ease;
-      }
-      .main.sidebar-collapsed{
-        margin-left:var(--sidebar-collapsed);
-      }
-      .content-header{
-        margin-bottom:28px;
-      }
-      .content-header h1{
-        font-size:28px;
-        font-weight:700;
-        color:var(--text);
-        margin-bottom:6px;
-      }
-      .content-header p{
-        font-size:16px;
-        color:var(--text-muted);
-      }
-      .grid{
-        display:grid;
-        grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
-        gap:20px;
-      }
-      .tile{
-        display:block;
-        text-decoration:none;
-        color:var(--text);
-        border:2px solid #e5e7eb;
-        border-radius:12px;
-        padding:24px;
-        background:#fff;
-        transition:all 0.2s ease;
-      }
-      .tile:hover{
-        border-color:var(--primary);
-        box-shadow:0 8px 24px rgba(89,102,247,0.15);
-        transform:translateY(-2px);
-      }
-      .tile .t{
-        font-weight:700;
-        margin-bottom:10px;
-        font-size:20px;
-        line-height:1.4;
-      }
-      .tile .d{
-        color:var(--text-muted);
-        font-size:16px;
-        line-height:1.5;
-      }
-      .pill{
-        display:inline-block;
-        font-size:13px;
-        padding:4px 10px;
-        border-radius:100px;
-        background:#eef2ff;
-        color:#3730a3;
-        margin-left:8px;
-        font-weight:600;
-      }
-      .statusMsg{
-        margin:0 0 24px;
-        color:#065f46;
-        background:#ecfdf5;
-        border:2px solid #a7f3d0;
-        padding:14px 18px;
-        border-radius:10px;
-        font-size:16px;
-      }
+@section('styles')
+<style>
+.content-header {
+  margin-bottom: 2rem;
+}
 
-      /* Mobile Responsive */
-      @media(max-width:900px){
-        .topbar{
-          padding:0 16px;
-        }
-        .topbar .brand{
-          font-size:18px;
-        }
-        .topbar .profile-info{
-          display:none;
-        }
-        .sidebar{
-          transform:translateX(-100%);
-          width:var(--sidebar-width);
-          box-shadow:4px 0 20px rgba(0,0,0,0.15);
-        }
-        .sidebar.open{
-          transform:translateX(0);
-        }
-        .sidebar.collapsed{
-          width:var(--sidebar-width);
-        }
-        .main{
-          margin-left:0;
-          padding:20px;
-        }
-        .main.sidebar-collapsed{
-          margin-left:0;
-        }
-        .content-header h1{
-          font-size:24px;
-        }
-        .grid{
-          grid-template-columns:1fr;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Topbar -->
-    <div class="topbar">
-      <div class="brand">
-        <button class="hamburger" onclick="toggleSidebar()">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        <span>WIKA GEDUNG</span>
-      </div>
-      <div class="right">
-        <div class="profile" id="profileMenu" onclick="toggleProfile()">
-          <div class="profile-avatar">{{ strtoupper(substr($user->nama ?? $user->username, 0, 1)) }}</div>
-          <div class="profile-info">
-            <div class="profile-name">{{ $user->nama ?? $user->username }}</div>
-            <div class="profile-role">{{ $role }}</div>
-          </div>
-          <div class="profile-dropdown">
-            <div class="profile-dropdown-header">
-              <div class="profile-dropdown-name">{{ $user->nama ?? $user->username }}</div>
-              <div class="profile-dropdown-role">{{ $role }}</div>
-            </div>
-            <div class="profile-dropdown-menu">
-              <form method="POST" action="{{ route('logout') }}" style="margin:0">
-                @csrf
-                <button type="submit" class="profile-dropdown-item logout">
-                  <span>🚪</span>
-                  <span>Logout</span>
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+.content-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
 
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-      <div class="sidebar-menu">
-        <a href="{{ route('dashboard') }}" class="sidebar-item active">
-          <span class="icon">🏠</span>
-          <span class="text">Dashboard</span>
-        </a>
-        @if(in_array(($role ?? ''), ['admin', 'ADMIN'], true))
-          <a href="{{ route('admin.kalender') }}" class="sidebar-item">
-            <span class="icon">📅</span>
-            <span class="text">Kalender Kerja</span>
-          </a>
-          <a href="{{ route('settings.index') }}" class="sidebar-item">
-            <span class="icon">⚙️</span>
-            <span class="text">Setting User</span>
-          </a>
-        @endif
-      </div>
-    </div>
+.content-header p {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
 
-    <!-- Main Content -->
-    <div class="main" id="mainContent">
-      @if(session('status'))
-        <div class="statusMsg">{{ session('status') }}</div>
-      @endif
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
 
-      <div class="content-header">
-        <h1>Dashboard</h1>
-        <p>Selamat datang di sistem absensi Wika</p>
-      </div>
+.tile {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #e7eaf3;
+  box-shadow: 0 4px 12px rgba(35, 45, 120, 0.06);
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+  display: block;
+}
 
-      <div class="grid">
-        @if(in_array(($role ?? ''), ['admin', 'ADMIN'], true))
-          <a class="tile" href="{{ route('pengajuan.index') }}">
-            <div class="t">📋 Pengajuan WFO</div>
-            <div class="d">Kelola pengajuan work from office dan work from anywhere dari semua biro.</div>
-          </a>
+.tile:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(35, 45, 120, 0.12);
+  border-color: var(--primary);
+}
 
-          <a class="tile" href="{{ route('admin.kalender') }}">
-            <div class="t">Kalender Kerja</div>
-            <div class="d">Input periode (minggu Senin–Minggu) dan lihat data kalender kerja.</div>
-          </a>
+.tile .t {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 
-          <a class="tile" href="{{ route('settings.index') }}">
-            <div class="t">Setting User</div>
-            <div class="d">Kelola user, biro, jabatan, dan role dalam satu tempat.</div>
-          </a>
-        @endif
-      </div>
-    </div>
+.tile .d {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
 
-    <script>
-      function toggleProfile() {
-        const profileMenu = document.getElementById('profileMenu');
-        profileMenu.classList.toggle('active');
-        event.stopPropagation();
-      }
+.statusMsg {
+  background: #d1fae5;
+  color: #065f46;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
 
-      // Close profile dropdown when clicking outside
-      document.addEventListener('click', function(event) {
-        const profileMenu = document.getElementById('profileMenu');
-        if (profileMenu && !profileMenu.contains(event.target)) {
-          profileMenu.classList.remove('active');
-        }
-      });
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+@endsection
 
-      function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        const hamburger = document.querySelector('.hamburger');
-        
-        // Check if mobile
-        const isMobile = window.innerWidth <= 900;
-        
-        if (isMobile) {
-          // Mobile: toggle open/close
-          sidebar.classList.toggle('open');
-          hamburger.classList.toggle('active');
-        } else {
-          // Desktop: toggle collapse/expand
-          const isCollapsed = sidebar.classList.contains('collapsed');
-          sidebar.classList.toggle('collapsed');
-          mainContent.classList.toggle('sidebar-collapsed');
-          
-          // When expanding (collapsed -> full), add active (X)
-          // When collapsing (full -> collapsed), remove active (hamburger)
-          if (isCollapsed) {
-            hamburger.classList.remove('active');
-          } else {
-            hamburger.classList.add('active');
-          }
-        }
-      }
+@section('content')
+@if(session('status'))
+  <div class="statusMsg">{{ session('status') }}</div>
+@endif
 
-      // Handle window resize
-      window.addEventListener('resize', function() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        const hamburger = document.querySelector('.hamburger');
-        
-        if (window.innerWidth > 900) {
-          sidebar.classList.remove('open');
-        } else {
-          sidebar.classList.remove('collapsed');
-          mainContent.classList.remove('sidebar-collapsed');
-          hamburger.classList.remove('active');
-        }
-      });
+<div class="content-header">
+  <h1>Dashboard</h1>
+  <p>Selamat datang di sistem absensi Wika</p>
+</div>
 
-      // Close sidebar when clicking outside on mobile
-      document.addEventListener('click', function(event) {
-        if (window.innerWidth <= 900) {
-          const sidebar = document.getElementById('sidebar');
-          const hamburger = document.querySelector('.hamburger');
-          
-          if (sidebar.classList.contains('open') && 
-              !sidebar.contains(event.target) && 
-              !hamburger.contains(event.target)) {
-            sidebar.classList.remove('open');
-          }
-        }
-      });
-    </script>
-  </body>
-</html>
+<div class="grid">
+  @if($isAdmin ?? false)
+    <a class="tile" href="{{ route('pengajuan.index') }}">
+      <div class="t">📋 Pengajuan WFO</div>
+      <div class="d">Kelola pengajuan work from office dan work from anywhere dari semua biro.</div>
+    </a>
+
+    <a class="tile" href="{{ route('admin.kalender') }}">
+      <div class="t">📅 Kalender Kerja</div>
+      <div class="d">Input periode (minggu Senin–Minggu) dan lihat data kalender kerja.</div>
+    </a>
+
+    <a class="tile" href="{{ route('settings.index') }}">
+      <div class="t">⚙️ Setting User</div>
+      <div class="d">Kelola user, biro, jabatan, dan role dalam satu tempat.</div>
+    </a>
+  @endif
+</div>
+@endsection

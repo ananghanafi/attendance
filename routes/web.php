@@ -75,8 +75,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/kalender-kerja/{id}', [AdminKalenderKerjaController::class, 'destroy'])->name('kalender.destroy');
 
     // Pengajuan WFO
-    Route::get('/pengajuan-wfo', [PengajuanWfoController::class, 'index'])->name('pengajuan.index');
-    Route::get('/pengajuan-wfo/{id}', [PengajuanWfoController::class, 'show'])->name('pengajuan.show');
-    Route::get('/pengajuan-wfo/{id}/edit', [PengajuanWfoController::class, 'edit'])->name('pengajuan.edit');
-    Route::put('/pengajuan-wfo/{id}', [PengajuanWfoController::class, 'update'])->name('pengajuan.update');
+    Route::get('/pengajuan', [PengajuanWfoController::class, 'index'])->name('pengajuan.index');
+    Route::post('/pengajuan/set-view', [PengajuanWfoController::class, 'setView'])->name('pengajuan.setView');
+    Route::get('/pengajuan/view', [PengajuanWfoController::class, 'show'])->name('pengajuan.show');
+    Route::post('/pengajuan/set-edit', [PengajuanWfoController::class, 'setEdit'])->name('pengajuan.setEdit');
+    Route::get('/pengajuan/edit', [PengajuanWfoController::class, 'edit'])->name('pengajuan.edit');
+    Route::put('/pengajuan/update', [PengajuanWfoController::class, 'update'])->name('pengajuan.update');
 });

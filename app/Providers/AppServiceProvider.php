@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +22,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Share isAdmin variable ke semua views
+        View::composer('*', function ($view) {
+            $isAdmin = false;
+            
+            if (Auth::check()) {
+                $user = Auth::user();
+                $roleName = DB::table('roles')->where('id', $user->role_id)->value('role_name');
+                // Cek admin dengan case-insensitive
+                $isAdmin = strtolower($roleName ?? '') === 'admin';
+            }
+            
+            $view->with('isAdmin', $isAdmin);
+        });
     }
 }

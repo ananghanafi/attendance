@@ -309,7 +309,7 @@
 <div class="table-section">
   <h2>Pengajuan Pegawai</h2>
   
-  <form id="pengajuanForm" method="POST" action="{{ route('pengajuan.update', $pengajuan->id) }}">
+  <form id="pengajuanForm" method="POST" action="{{ route('pengajuan.update') }}">
     @csrf
     @method('PUT')
     
@@ -487,6 +487,9 @@
     </div>
     
     @if($details->count() > 0 && !$readOnly)
+      <div id="overTargetWarning" class="alert alert-error" style="display: none; margin-top: 1rem;">
+        ⚠️ <strong>Tidak dapat menyimpan!</strong> Persentase WFO melebihi batas maksimal {{ $pengajuan->persentase_decimal ?? 50 }}%. Silakan kurangi jumlah WFO pada hari yang berwarna merah.
+      </div>
       <button type="submit" class="save-button">
         💾 Simpan Perubahan
       </button>
@@ -499,6 +502,8 @@
   const form = document.getElementById('pengajuanForm');
   const totalPegawai = {{ $totalPegawai }};
   const targetPercentage = {{ $pengajuan->persentase_decimal ?? 50 }};
+  const saveButton = document.querySelector('.save-button');
+  const overTargetWarning = document.getElementById('overTargetWarning');
   
   // Initialize summary on page load
   document.addEventListener('DOMContentLoaded', function() {
@@ -513,6 +518,7 @@
   
   function updateSummary() {
     const days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat'];
+    let hasOverTarget = false;
     
     days.forEach(day => {
       // Count WFO/WFA for this day
@@ -546,10 +552,28 @@
       // Color validation - red if over target
       if(wfoPercentage > targetPercentage) {
         wfoCell.classList.add('over-target');
+        hasOverTarget = true;
       } else {
         wfoCell.classList.remove('over-target');
       }
     });
+    
+    // Disable/Enable save button based on validation
+    if(saveButton) {
+      if(hasOverTarget) {
+        saveButton.disabled = true;
+        saveButton.style.opacity = '0.5';
+        saveButton.style.cursor = 'not-allowed';
+        saveButton.title = `Persentase WFO melebihi batas maksimal ${targetPercentage}%`;
+        if(overTargetWarning) overTargetWarning.style.display = 'flex';
+      } else {
+        saveButton.disabled = false;
+        saveButton.style.opacity = '1';
+        saveButton.style.cursor = 'pointer';
+        saveButton.title = '';
+        if(overTargetWarning) overTargetWarning.style.display = 'none';
+      }
+    }
     
     // Update individual row totals
     document.querySelectorAll('.employee-row').forEach(row => {

@@ -91,7 +91,7 @@ class AdminKalenderKerjaController extends Controller
                 $pengajuanId = DB::table('pengajuan_wao')->insertGetId([
                     'biro_id' => $biro->id,
                     'kalender' => $kalenderDb, // Simpan format "minggu-bulan-tahun"
-                    'status' => 'pending',
+                    'status' => 'draft', // draft = belum diedit (Open), final = sudah diedit (Close)
                     'created_date' => now(),
                 ]);
 
