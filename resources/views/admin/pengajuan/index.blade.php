@@ -240,11 +240,13 @@ tr:hover{background:#f9fafb}
                 <input type="hidden" name="id" value="{{ $p->id }}">
                 <button type="submit" class="btn secondary" style="padding:8px 16px">View</button>
               </form>
+              @if($p->canEdit)
               <form action="{{ route('pengajuan.setEdit') }}" method="POST" style="display:inline">
                 @csrf
                 <input type="hidden" name="id" value="{{ $p->id }}">
                 <button type="submit" class="btn primary" style="padding:8px 16px">Edit</button>
               </form>
+              @endif
             </td>
           </tr>
         @empty

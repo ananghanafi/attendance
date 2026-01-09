@@ -70,12 +70,10 @@ body{font-family:Inter,system-ui,Arial;background:var(--bg);font-size:17px;color
 <div class="profile-avatar">@php echo strtoupper(substr(auth()->user()->nama ?? auth()->user()->username, 0, 1)); @endphp</div>
 <div class="profile-info">
 <div class="profile-name">{{ auth()->user()->nama ?? auth()->user()->username }}</div>
-<div class="profile-role">{{ session("role_name") ?? "User" }}</div>
 </div>
 <div class="profile-dropdown">
 <div class="profile-dropdown-header">
 <div class="profile-dropdown-name">{{ auth()->user()->nama ?? auth()->user()->username }}</div>
-<div class="profile-dropdown-role">{{ session("role_name") ?? "User" }}</div>
 </div>
 <div class="profile-dropdown-menu">
 <form method="POST" action="{{ route("logout") }}" style="margin:0">
@@ -94,6 +92,9 @@ body{font-family:Inter,system-ui,Arial;background:var(--bg);font-size:17px;color
 <a href="{{ route("admin.kalender") }}" class="sidebar-item @if(request()->routeIs("admin.kalender*") || request()->routeIs("kalender.*")) active @endif"><span class="icon">📅</span><span class="text">Kalender Kerja</span></a>
 <a href="{{ route("pengajuan.index") }}" class="sidebar-item @if(request()->routeIs("pengajuan.*")) active @endif"><span class="icon">📋</span><span class="text">Pengajuan WFO</span></a>
 <a href="{{ route("settings.index") }}" class="sidebar-item @if(request()->routeIs("settings.*") || request()->routeIs("users.*") || request()->routeIs("biro.*") || request()->routeIs("jabatan.*") || request()->routeIs("role.*")) active @endif"><span class="icon">⚙️</span><span class="text">Setting User</span></a>
+@else
+{{-- Menu untuk user biasa --}}
+<a href="{{ route("pengajuan.index") }}" class="sidebar-item @if(request()->routeIs("pengajuan.*")) active @endif"><span class="icon">📋</span><span class="text">Pengajuan WFO</span></a>
 @endif
 </div>
 </div>

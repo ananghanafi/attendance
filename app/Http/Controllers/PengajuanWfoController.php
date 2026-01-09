@@ -8,21 +8,57 @@ use Illuminate\Support\Facades\DB;
 
 class PengajuanWfoController extends Controller
 {
-    private function ensureAdmin(): void
+    /**
+     * Cek apakah user adalah admin atau VP
+     */
+    private function isAdminOrVP(): bool
     {
         $user = Auth::user();
         $role = DB::table('roles')->where('id', $user->role_id)->value('role_name');
-        if ($role !== 'admin' && $role !== 'ADMIN') {
+        return in_array(strtoupper($role ?? ''), ['ADMIN', 'VP']);
+    }
+
+    /**
+     * Pastikan user adalah admin atau VP, jika tidak abort 403
+     */
+    private function ensureAdminOrVP(): void
+    {
+        if (!$this->isAdminOrVP()) {
             abort(403);
         }
     }
 
     /**
-     * Dashboard pengajuan WFO - List per biro dengan filter
+     * Cek apakah user punya akses ke pengajuan (admin/VP ATAU user dari biro yang sama)
+     */
+    private function ensureCanAccessPengajuan(int $pengajuanId): void
+    {
+        $user = Auth::user();
+        
+        // Admin/VP selalu bisa akses
+        if ($this->isAdminOrVP()) {
+            return;
+        }
+        
+        // Cek apakah user dari biro yang sama dengan pengajuan
+        $pengajuan = DB::table('pengajuan_wao')->where('id', $pengajuanId)->first();
+        
+        if ($pengajuan && $pengajuan->biro_id === $user->biro_id) {
+            return;
+        }
+        
+        abort(403);
+    }
+
+    /**
+     * Dashboard pengajuan WFO
+     * - Admin/VP: List semua biro dengan filter
+     * - User biasa: Hanya biro sendiri
      */
     public function index(Request $request)
     {
-        $this->ensureAdmin();
+        $user = Auth::user();
+        $isAdminOrVP = $this->isAdminOrVP();
 
         // Filter parameters
         $search = $request->query('search', '');
@@ -34,14 +70,56 @@ class PengajuanWfoController extends Controller
         $hasFilter = !empty($search) || !empty($minggu) || !empty($bulan) || !empty($tahun);
 
         // Get dropdown data for filters - hanya biro yang is_proyek = false (bukan proyek)
-        $biros = DB::table('biro')
-            ->where('is_proyek', false)
-            ->orderBy('biro_name')
-            ->get(['id', 'biro_name']);
+        // User biasa hanya lihat biro sendiri
+        if ($isAdminOrVP) {
+            $biros = DB::table('biro')
+                ->where('is_proyek', false)
+                ->orderBy('biro_name')
+                ->get(['id', 'biro_name']);
+        } else {
+            $biros = DB::table('biro')
+                ->where('id', $user->biro_id)
+                ->get(['id', 'biro_name']);
+        }
 
-        // Jika TIDAK ada filter: tampilkan max 4 data terbaru per biro
-        // Jika ADA filter: tampilkan semua data sesuai filter
-        if (!$hasFilter) {
+        // USER BIASA: Hanya tampilkan pengajuan dari biro sendiri
+        if (!$isAdminOrVP) {
+            $query = DB::table('pengajuan_wao as pw')
+                ->join('biro as b', 'pw.biro_id', '=', 'b.id')
+                ->join('kalender_kerja_v2 as kk', 'pw.kalender', '=', 'kk.kalender')
+                ->where('pw.biro_id', $user->biro_id)
+                ->select([
+                    'pw.id',
+                    'pw.biro_id',
+                    'b.biro_name',
+                    'pw.kalender',
+                    'pw.status',
+                    'pw.created_date',
+                    'kk.kalender as kalender_string',
+                    'kk.periode',
+                    'kk.tgl_awal',
+                    'kk.tgl_akhir',
+                    'kk.persentase_decimal'
+                ]);
+
+            // Apply filters
+            if ($minggu) {
+                $query->where('kk.kalender', 'like', $minggu . '-%');
+            }
+            if ($bulan) {
+                $query->where('kk.kalender', 'like', '%-' . $bulan . '-%');
+            }
+            if ($tahun) {
+                $query->where('kk.kalender', 'like', '%-' . $tahun);
+            }
+
+            $pengajuans = $query
+                ->orderBy('kk.tgl_awal', 'desc')
+                ->paginate(10)
+                ->withQueryString();
+        }
+        // ADMIN/VP: Tampilkan semua biro
+        elseif (!$hasFilter) {
             // Query dengan ROW_NUMBER untuk limit 4 per biro
             $subQuery = DB::table('pengajuan_wao as pw')
                 ->join('biro as b', 'pw.biro_id', '=', 'b.id')
@@ -134,6 +212,9 @@ class PengajuanWfoController extends Controller
                 $p->tahun = null;
                 $p->minggu = null;
             }
+
+            // Cek apakah periode ini bisa diedit (tanggal sekarang dalam rentang tgl_awal - tgl_akhir)
+            $p->canEdit = $this->isPeriodeEditable($p->tgl_awal, $p->tgl_akhir);
         }
 
         return view('admin.pengajuan.index', [
@@ -145,6 +226,7 @@ class PengajuanWfoController extends Controller
                 'bulan' => $bulan,
                 'tahun' => $tahun,
             ],
+            'isAdminOrVP' => $isAdminOrVP,
         ]);
     }
 
@@ -153,8 +235,9 @@ class PengajuanWfoController extends Controller
      */
     public function setView(Request $request)
     {
-        $this->ensureAdmin();
-        session(['pengajuan_id' => $request->input('id')]);
+        $id = $request->input('id');
+        $this->ensureCanAccessPengajuan($id);
+        session(['pengajuan_id' => $id]);
         return redirect()->route('pengajuan.show');
     }
 
@@ -163,12 +246,13 @@ class PengajuanWfoController extends Controller
      */
     public function show()
     {
-        $this->ensureAdmin();
-
         $id = session('pengajuan_id');
         if (!$id) {
             return redirect()->route('pengajuan.index')->with('error', 'Silakan pilih pengajuan dari daftar');
         }
+
+        // Cek akses
+        $this->ensureCanAccessPengajuan($id);
 
         // Get pengajuan master
         // JOIN langsung via kolom kalender yang sama format "minggu-bulan-tahun"
@@ -252,6 +336,7 @@ class PengajuanWfoController extends Controller
             'details' => $details,
             'readOnly' => true, // View mode - radio buttons disabled
             'hariLibur' => $hariLibur, // Array hari yang libur: ['senin' => true, 'selasa' => false, ...]
+            'isAdminOrVP' => $this->isAdminOrVP(),
         ]);
     }
 
@@ -260,22 +345,43 @@ class PengajuanWfoController extends Controller
      */
     public function setEdit(Request $request)
     {
-        $this->ensureAdmin();
-        session(['pengajuan_id' => $request->input('id')]);
+        $id = $request->input('id');
+        
+        // Cek akses
+        $this->ensureCanAccessPengajuan($id);
+        
+        // Cek apakah periode bisa diedit
+        $pengajuan = DB::table('pengajuan_wao as pw')
+            ->leftJoin('kalender_kerja_v2 as kk', 'pw.kalender', '=', 'kk.kalender')
+            ->where('pw.id', $id)
+            ->select(['kk.tgl_awal', 'kk.tgl_akhir'])
+            ->first();
+        
+        if (!$pengajuan) {
+            return redirect()->route('pengajuan.index')->with('error', 'Pengajuan tidak ditemukan');
+        }
+        
+        if (!$this->isPeriodeEditable($pengajuan->tgl_awal, $pengajuan->tgl_akhir)) {
+            return redirect()->route('pengajuan.index')->with('error', 'Periode pengajuan ini sudah tidak dapat diedit. Hanya pengajuan dalam rentang tanggal aktif yang dapat diedit.');
+        }
+        
+        session(['pengajuan_id' => $id]);
         return redirect()->route('pengajuan.edit');
     }
 
     /**
      * Edit pengajuan (form untuk edit WFO/WFA)
+     * Akses: Admin/VP atau user dari biro yang sama
      */
     public function edit()
     {
-        $this->ensureAdmin();
-
         $id = session('pengajuan_id');
         if (!$id) {
             return redirect()->route('pengajuan.index')->with('error', 'Silakan pilih pengajuan dari daftar');
         }
+
+        // Cek akses: admin/VP atau user dari biro yang sama
+        $this->ensureCanAccessPengajuan($id);
 
         // Get pengajuan master
         // JOIN langsung via kolom kalender yang sama format "minggu-bulan-tahun"
@@ -296,6 +402,11 @@ class PengajuanWfoController extends Controller
 
         if (!$pengajuan) {
             return redirect()->route('pengajuan.index')->with('error', 'Pengajuan tidak ditemukan');
+        }
+
+        // Cek lagi apakah periode masih bisa diedit (untuk keamanan)
+        if (!$this->isPeriodeEditable($pengajuan->tgl_awal, $pengajuan->tgl_akhir)) {
+            return redirect()->route('pengajuan.index')->with('error', 'Periode pengajuan ini sudah tidak dapat diedit. Hanya pengajuan dalam rentang tanggal aktif yang dapat diedit.');
         }
 
         // Extract bulan/tahun/minggu dari kk.kalender (format: "minggu-bulan-tahun" e.g. "1-8-2025")
@@ -355,20 +466,23 @@ class PengajuanWfoController extends Controller
             'details' => $details,
             'readOnly' => false, // Edit mode - radio buttons enabled
             'hariLibur' => $hariLibur, // Array hari yang libur: ['senin' => true, 'selasa' => false, ...]
+            'isAdminOrVP' => $this->isAdminOrVP(),
         ]);
     }
 
     /**
      * Update pengajuan WFO/WFA per pegawai
+     * Akses: Admin/VP atau user dari biro yang sama
      */
     public function update(Request $request)
     {
-        $this->ensureAdmin();
-
         $id = session('pengajuan_id');
         if (!$id) {
             return redirect()->route('pengajuan.index')->with('error', 'Silakan pilih pengajuan dari daftar');
         }
+
+        // Cek akses: admin/VP atau user dari biro yang sama
+        $this->ensureCanAccessPengajuan($id);
 
         try {
             DB::beginTransaction();
@@ -485,7 +599,9 @@ class PengajuanWfoController extends Controller
 
             DB::commit();
 
-            return redirect()->route('pengajuan.edit')->with('success', 'Pengajuan berhasil diperbarui');
+            // Redirect ke view mode (bukan edit mode) setelah simpan
+            // User harus kembali ke dashboard untuk edit lagi
+            return redirect()->route('pengajuan.show')->with('success', 'Pengajuan berhasil diperbarui. Data sekarang dalam mode view only.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
@@ -554,5 +670,27 @@ class PengajuanWfoController extends Controller
         }
 
         return $hariLibur;
+    }
+
+    /**
+     * Cek apakah periode pengajuan bisa diedit
+     * Periode hanya bisa diedit jika tanggal hari ini berada dalam rentang tgl_awal - tgl_akhir
+     * 
+     * @param string|null $tglAwal Tanggal awal periode (format: Y-m-d)
+     * @param string|null $tglAkhir Tanggal akhir periode (format: Y-m-d)
+     * @return bool
+     */
+    private function isPeriodeEditable(?string $tglAwal, ?string $tglAkhir): bool
+    {
+        if (!$tglAwal || !$tglAkhir) {
+            return false;
+        }
+
+        $today = new \DateTime('today');
+        $startDate = new \DateTime($tglAwal);
+        $endDate = new \DateTime($tglAkhir);
+
+        // Tanggal hari ini harus >= tgl_awal DAN <= tgl_akhir
+        return $today >= $startDate && $today <= $endDate;
     }
 }

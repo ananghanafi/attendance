@@ -103,6 +103,12 @@
       <div class="t">⚙️ Setting User</div>
       <div class="d">Kelola user, biro, jabatan, dan role dalam satu tempat.</div>
     </a>
+  @else
+    {{-- User biasa: hanya tampilkan menu pengajuan WFO biro sendiri --}}
+    <a class="tile" href="{{ route('pengajuan.index') }}">
+      <div class="t">📋 Pengajuan WFO</div>
+      <div class="d">Lihat dan kelola pengajuan work from office / work from anywhere untuk {{ $biroName ?? 'biro Anda' }}.</div>
+    </a>
   @endif
 </div>
 @endsection

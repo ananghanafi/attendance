@@ -133,7 +133,9 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
       <div id="panel-data" class="panel">
         <div class="card">
           <h2 style="margin:0 0 12px">Data Kalender Kerja</h2>
-          
+          @if(session('status'))
+            <div class="status">{{ session('status') }}</div>
+          @endif
           <!-- Search Box -->
           <div style="margin-bottom:16px">
             <input 
@@ -159,7 +161,7 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
                 <tbody>
                   @forelse($rows as $r)
                     <tr class="kalender-row">
-                      <td>{{ $loop->iteration }}</td>
+                      <td>{{ ($rows->currentPage() - 1) * $rows->perPage() + $loop->iteration }}</td>
                       <td>{{ $r->judul }}</td>
                       <td>{{ $r->tgl_awal ? $r->tgl_awal->format('Y-m-d') : '' }}</td>
                       <td>{{ $r->tgl_akhir ? $r->tgl_akhir->format('Y-m-d') : '' }}</td>
@@ -191,6 +193,59 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
           <div id="noResults" style="display:none;text-align:center;padding:20px;color:var(--text-muted)">
             Tidak ada data yang cocok dengan pencarian.
           </div>
+
+          <!-- Pagination Kalender Kerja -->
+          @if($rows->total() > 0)
+          <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--text-muted)">
+            Menampilkan {{ $rows->firstItem() ?? 0 }} - {{ $rows->lastItem() ?? 0 }} dari {{ $rows->total() }} data
+          </div>
+          @endif
+          
+          @if($rows->hasPages())
+          <div class="pagination-wrapper" style="margin-top:12px;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap">
+            {{-- Previous --}}
+            @if($rows->onFirstPage())
+              <span class="btn" style="padding:8px 12px;opacity:0.5;cursor:not-allowed">‹ Prev</span>
+            @else
+              <button type="button" class="btn pagination-btn" data-page="{{ $rows->currentPage() - 1 }}" data-type="kalender" style="padding:8px 12px">‹ Prev</button>
+            @endif
+
+            {{-- Page Numbers --}}
+            @php
+              $start = max(1, $rows->currentPage() - 2);
+              $end = min($rows->lastPage(), $rows->currentPage() + 2);
+            @endphp
+            
+            @if($start > 1)
+              <button type="button" class="btn pagination-btn" data-page="1" data-type="kalender" style="padding:8px 12px">1</button>
+              @if($start > 2)
+                <span style="padding:8px 4px;color:var(--text-muted)">...</span>
+              @endif
+            @endif
+
+            @for($i = $start; $i <= $end; $i++)
+              @if($i == $rows->currentPage())
+                <span class="btn primary" style="padding:8px 12px">{{ $i }}</span>
+              @else
+                <button type="button" class="btn pagination-btn" data-page="{{ $i }}" data-type="kalender" style="padding:8px 12px">{{ $i }}</button>
+              @endif
+            @endfor
+
+            @if($end < $rows->lastPage())
+              @if($end < $rows->lastPage() - 1)
+                <span style="padding:8px 4px;color:var(--text-muted)">...</span>
+              @endif
+              <button type="button" class="btn pagination-btn" data-page="{{ $rows->lastPage() }}" data-type="kalender" style="padding:8px 12px">{{ $rows->lastPage() }}</button>
+            @endif
+
+            {{-- Next --}}
+            @if($rows->hasMorePages())
+              <button type="button" class="btn pagination-btn" data-page="{{ $rows->currentPage() + 1 }}" data-type="kalender" style="padding:8px 12px">Next ›</button>
+            @else
+              <span class="btn" style="padding:8px 12px;opacity:0.5;cursor:not-allowed">Next ›</span>
+            @endif
+          </div>
+          @endif
         </div>
       </div>
 
@@ -273,9 +328,25 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
                 </tr>
               </thead>
               <tbody id="liburTableBody">
-                <tr id="loadingLibur">
-                  <td colspan="4" style="text-align:center;color:var(--text-muted)">Memuat data...</td>
-                </tr>
+                @forelse($libur as $l)
+                  @php
+                    $dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                    $dateObj = \Carbon\Carbon::parse($l->tanggal);
+                    $dayName = $dayNames[$dateObj->dayOfWeek];
+                  @endphp
+                  <tr class="libur-row">
+                    <td>{{ ($libur->currentPage() - 1) * $libur->perPage() + $loop->iteration }}</td>
+                    <td>{{ $dateObj->format('d F Y') }}</td>
+                    <td>{{ $dayName }}</td>
+                    <td>
+                      <button type="button" class="btn delete-libur-btn" data-id="{{ $l->id }}" style="padding:8px 10px;border-radius:8px;border:1px solid #fecdd3;background:#fff1f2;color:#991b1b">Hapus</button>
+                    </td>
+                  </tr>
+                @empty
+                  <tr id="emptyLiburRow">
+                    <td colspan="4" style="text-align:center;color:var(--text-muted)">Belum ada data tanggal libur.</td>
+                  </tr>
+                @endforelse
               </tbody>
             </table>
           </div>
@@ -283,6 +354,60 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
           <div id="noResultsLibur" style="display:none;text-align:center;padding:20px;color:var(--text-muted)">
             Tidak ada data yang cocok dengan pencarian.
           </div>
+
+          <!-- Info Total Data Libur -->
+          @if($libur->total() > 0)
+          <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--text-muted)">
+            Menampilkan {{ $libur->firstItem() ?? 0 }} - {{ $libur->lastItem() ?? 0 }} dari {{ $libur->total() }} data
+          </div>
+          @endif
+
+          <!-- Pagination Kalender Libur -->
+          @if($libur->hasPages())
+          <div class="pagination-wrapper" style="margin-top:12px;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap">
+            {{-- Previous --}}
+            @if($libur->onFirstPage())
+              <span class="btn" style="padding:8px 12px;opacity:0.5;cursor:not-allowed">‹ Prev</span>
+            @else
+              <button type="button" class="btn pagination-btn" data-page="{{ $libur->currentPage() - 1 }}" data-type="libur" style="padding:8px 12px">‹ Prev</button>
+            @endif
+
+            {{-- Page Numbers --}}
+            @php
+              $startL = max(1, $libur->currentPage() - 2);
+              $endL = min($libur->lastPage(), $libur->currentPage() + 2);
+            @endphp
+            
+            @if($startL > 1)
+              <button type="button" class="btn pagination-btn" data-page="1" data-type="libur" style="padding:8px 12px">1</button>
+              @if($startL > 2)
+                <span style="padding:8px 4px;color:var(--text-muted)">...</span>
+              @endif
+            @endif
+
+            @for($i = $startL; $i <= $endL; $i++)
+              @if($i == $libur->currentPage())
+                <span class="btn primary" style="padding:8px 12px">{{ $i }}</span>
+              @else
+                <button type="button" class="btn pagination-btn" data-page="{{ $i }}" data-type="libur" style="padding:8px 12px">{{ $i }}</button>
+              @endif
+            @endfor
+
+            @if($endL < $libur->lastPage())
+              @if($endL < $libur->lastPage() - 1)
+                <span style="padding:8px 4px;color:var(--text-muted)">...</span>
+              @endif
+              <button type="button" class="btn pagination-btn" data-page="{{ $libur->lastPage() }}" data-type="libur" style="padding:8px 12px">{{ $libur->lastPage() }}</button>
+            @endif
+
+            {{-- Next --}}
+            @if($libur->hasMorePages())
+              <button type="button" class="btn pagination-btn" data-page="{{ $libur->currentPage() + 1 }}" data-type="libur" style="padding:8px 12px">Next ›</button>
+            @else
+              <span class="btn" style="padding:8px 12px;opacity:0.5;cursor:not-allowed">Next ›</span>
+            @endif
+          </div>
+          @endif
         </div>
       </div>
     </main>
@@ -302,11 +427,6 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
         panelForm.classList.toggle('active', key === 'form');
         panelData.classList.toggle('active', key === 'data');
         panelLibur.classList.toggle('active', key === 'libur');
-        
-        // Load libur data when switching to libur tab
-        if (key === 'libur') {
-          loadLiburData();
-        }
       }));
 
       // --- Dropdown bulan & tahun ---
@@ -565,7 +685,6 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
       // =====================
       
       const hariNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-      let liburData = [];
       let selectedLiburDates = []; // Array tanggal yang dipilih
       let liburViewYear = null;
       let liburViewMonth = null;
@@ -767,59 +886,7 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
         buildLiburCalendar();
       }));
 
-      // Load libur data from API
-      async function loadLiburData() {
-        const tbody = document.getElementById('liburTableBody');
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">Memuat data...</td></tr>';
-        
-        try {
-          const response = await fetch('{{ route("kalender.libur.index") }}', {
-            headers: {
-              'Accept': 'application/json',
-              'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
-          });
-          
-          const result = await response.json();
-          
-          if (result.success) {
-            liburData = result.data;
-            renderLiburTable(liburData);
-          } else {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#991b1b">Gagal memuat data.</td></tr>';
-          }
-        } catch (error) {
-          console.error('Error loading libur data:', error);
-          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#991b1b">Gagal memuat data.</td></tr>';
-        }
-      }
-
-      // Render libur table
-      function renderLiburTable(data) {
-        const tbody = document.getElementById('liburTableBody');
-        
-        if (data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted)">Belum ada tanggal libur.</td></tr>';
-          return;
-        }
-        
-        tbody.innerHTML = data.map((item, index) => {
-          const date = new Date(item.tanggal);
-          const hari = hariNames[date.getDay()];
-          return `
-            <tr class="libur-row" data-tanggal="${item.tanggal}">
-              <td>${index + 1}</td>
-              <td>${item.tanggal}</td>
-              <td>${hari}</td>
-              <td>
-                <button type="button" onclick="deleteLibur(${item.id})" class="btn" style="padding:8px 10px;border-radius:8px;border:1px solid #fecdd3;background:#fff1f2;color:#991b1b">Hapus</button>
-              </td>
-            </tr>
-          `;
-        }).join('');
-      }
-
-      // Delete libur
+      // Delete libur via AJAX
       async function deleteLibur(id) {
         if (!confirm('Yakin hapus tanggal libur ini?')) return;
         
@@ -835,7 +902,8 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
           const result = await response.json();
           
           if (result.success) {
-            loadLiburData(); // Reload table
+            // Reload page with tab=libur to stay on libur tab
+            window.location.href = '{{ route("admin.kalender") }}?tab=libur';
           } else {
             alert(result.message || 'Gagal menghapus tanggal libur.');
           }
@@ -844,6 +912,14 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
           alert('Gagal menghapus tanggal libur.');
         }
       }
+
+      // Delete libur button click handler
+      document.querySelectorAll('.delete-libur-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const id = this.getAttribute('data-id');
+          deleteLibur(id);
+        });
+      });
 
       // Search libur
       const searchLiburInput = document.getElementById('searchLibur');
@@ -864,8 +940,59 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
             }
           });
           
-          noResultsLibur.style.display = visibleCount === 0 && liburData.length > 0 ? 'block' : 'none';
+          const totalRows = document.querySelectorAll('.libur-row').length;
+          noResultsLibur.style.display = visibleCount === 0 && totalRows > 0 ? 'block' : 'none';
         });
+      }
+
+      // Pagination handlers - via POST (no page in URL)
+      document.querySelectorAll('.pagination-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const page = this.getAttribute('data-page');
+          const type = this.getAttribute('data-type');
+          
+          // Build form for POST request (no page in URL)
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = '{{ route("admin.kalender.page") }}';
+          form.style.display = 'none';
+          
+          // CSRF token
+          const csrf = document.createElement('input');
+          csrf.type = 'hidden';
+          csrf.name = '_token';
+          csrf.value = '{{ csrf_token() }}';
+          form.appendChild(csrf);
+          
+          // Page parameter
+          const pageInput = document.createElement('input');
+          pageInput.type = 'hidden';
+          pageInput.name = type === 'kalender' ? 'p' : 'lp';
+          pageInput.value = page;
+          form.appendChild(pageInput);
+
+          // Preserve active tab
+          const tabInput = document.createElement('input');
+          tabInput.type = 'hidden';
+          tabInput.name = 'tab';
+          tabInput.value = type === 'kalender' ? 'data' : 'libur';
+          form.appendChild(tabInput);
+          
+          document.body.appendChild(form);
+          form.submit();
+        });
+      });
+
+      // Handle tab preservation from server
+      const activeTab = '{{ $activeTab ?? "form" }}';
+      if (activeTab && activeTab !== 'form') {
+        tabs.forEach(t => {
+          const key = t.getAttribute('data-tab');
+          t.classList.toggle('active', key === activeTab);
+        });
+        panelForm.classList.toggle('active', activeTab === 'form');
+        panelData.classList.toggle('active', activeTab === 'data');
+        panelLibur.classList.toggle('active', activeTab === 'libur');
       }
 
       // Initialize libur calendar

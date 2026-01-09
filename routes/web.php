@@ -7,9 +7,17 @@ use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AdminMasterDataController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\PengajuanWfoController;
+use App\Http\Controllers\IndexController;
+use App\Http\Controllers\MagicLinkController;
 
 // Landing page -> tunjukkan login form langsung
 Route::get('/', [AuthController::class, 'showLoginForm']);
+
+// Example API route
+Route::get('/example-api', [IndexController::class, 'example_api']);
+
+// Magic Link Auto-Login (tidak perlu auth middleware)
+Route::get('/magic-login/{token}', [MagicLinkController::class, 'login'])->name('magic.login');
 
 // Auth (username-based)
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -66,6 +74,7 @@ Route::middleware('auth')->group(function () {
     // Kalender Kerja (URL netral, akses tetap dibatasi di controller)
     Route::get('/kalender-kerja', [AdminKalenderKerjaController::class, 'index'])->name('admin.kalender');
     Route::post('/kalender-kerja', [AdminKalenderKerjaController::class, 'store'])->name('admin.kalender.store');
+    Route::match(['get', 'post'], '/kalender-kerja/page', [AdminKalenderKerjaController::class, 'index'])->name('admin.kalender.page');
 
     // Edit Kalender Kerja
     Route::get('/kalender-kerja/{id}/edit', [AdminKalenderKerjaController::class, 'edit'])->name('kalender.edit');

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\KalenderKerjaV2;
+use App\Services\WhatsAppNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AdminKalenderKerjaController extends Controller
 {
@@ -13,22 +15,42 @@ class AdminKalenderKerjaController extends Controller
     {
         $user = Auth::user();
         $role = DB::table('roles')->where('id', $user->role_id)->value('role_name');
-        // accept both legacy 'admin' and new 'ADMIN'
-        if ($role !== 'admin' && $role !== 'ADMIN') {
+        // Accept ADMIN and VP roles
+        if (!in_array(strtoupper($role ?? ''), ['ADMIN', 'VP'])) {
             abort(403);
         }
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $this->ensureAdmin();
 
-        $rows = KalenderKerjaV2::query()
-            ->orderByDesc('id')
-            ->limit(10)
-            ->get();
+        // Session-based pagination: simpan page ke session, ambil dari request jika ada
+        $page = $request->input('p', session('kalender_page', 1));
+        session(['kalender_page' => $page]);
 
-        return view('admin.kalender.index', ['rows' => $rows]);
+        // Sort by tgl_awal descending (terbaru di atas)
+        $rows = KalenderKerjaV2::query()
+            ->orderByDesc('tgl_awal')
+            ->paginate(10, ['*'], 'p', $page);
+
+        // Session-based pagination untuk kalender libur
+        $liburPage = $request->input('lp', session('kalender_libur_page', 1));
+        session(['kalender_libur_page' => $liburPage]);
+
+        $libur = DB::table('kalender_libur')
+            ->orderBy('tanggal', 'desc')
+            ->paginate(10, ['*'], 'lp', $liburPage);
+
+        // Simpan tab aktif
+        $activeTab = $request->input('tab', session('kalender_active_tab', 'form'));
+        session(['kalender_active_tab' => $activeTab]);
+
+        return view('admin.kalender.index', [
+            'rows' => $rows,
+            'libur' => $libur,
+            'activeTab' => $activeTab
+        ]);
     }
 
     public function store(Request $request)
@@ -147,15 +169,33 @@ class AdminKalenderKerjaController extends Controller
                 ->delete();
         }
 
-        // data tanggal maks 10
-        $count = KalenderKerjaV2::query()->count();
-        if ($count > 10) {
-            $toDelete = $count - 10;
-            KalenderKerjaV2::query()
-                ->orderBy('id')
-                ->limit($toDelete)
-                ->delete();
+        // Kirim notifikasi WhatsApp ke user dengan is_kirim = true
+        try {
+            $whatsappService = new WhatsAppNotificationService();
+            $notifResult = $whatsappService->sendPengajuanWfoNotification(
+                $kalenderId,
+                $kalenderDb,
+                $data['minggu'],
+                $data['bulan'],
+                $data['tahun']
+            );
+
+            if ($notifResult['sent_count'] > 0) {
+                Log::info('WhatsApp notification sent', [
+                    'kalender' => $kalenderDb,
+                    'sent_count' => $notifResult['sent_count'],
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Log error tapi jangan gagalkan proses utama
+            Log::error('Failed to send WhatsApp notification', [
+                'error' => $e->getMessage(),
+                'kalender' => $kalenderDb,
+            ]);
         }
+
+        // Stay di tab "data" setelah store
+        session(['kalender_active_tab' => 'data']);
 
         return redirect()->route('admin.kalender')->with('status', 'Data kalender kerja berhasil disimpan.');
     }
@@ -212,6 +252,9 @@ class AdminKalenderKerjaController extends Controller
             'judul' => $judulText,
         ]);
 
+        // Stay di tab "data" setelah update
+        session(['kalender_active_tab' => 'data']);
+
         return redirect()->route('admin.kalender')->with('status', 'Data kalender kerja berhasil diperbarui.');
     }
 
@@ -250,6 +293,9 @@ class AdminKalenderKerjaController extends Controller
         
         // 4. Hapus kalender
         $row->delete();
+
+        // Stay di tab "data" setelah delete
+        session(['kalender_active_tab' => 'data']);
 
         return redirect()->route('admin.kalender')->with('status', 'Data kalender kerja berhasil dihapus.');
     }
@@ -311,6 +357,9 @@ class AdminKalenderKerjaController extends Controller
         if ($skipped > 0) {
             $message .= " ({$skipped} tanggal sudah ada sebelumnya)";
         }
+
+        // Stay di tab "libur" setelah store
+        session(['kalender_active_tab' => 'libur']);
 
         return redirect()->route('admin.kalender')->with('status', $message);
     }

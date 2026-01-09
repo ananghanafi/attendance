@@ -53,7 +53,23 @@ class AuthController extends Controller
     {
         $user = Auth::user();
         $role = DB::table('roles')->where('id', $user->role_id)->value('role_name');
+        $roleUpper = strtoupper($role ?? '');
+        
+        // Cek apakah admin atau VP
+        $isAdminOrVP = in_array($roleUpper, ['ADMIN', 'VP']);
+        
+        // Ambil nama biro untuk user biasa
+        $biroName = null;
+        if (!$isAdminOrVP && $user->biro_id) {
+            $biroName = DB::table('biro')->where('id', $user->biro_id)->value('biro_name');
+        }
 
-        return view('dashboard', ['user' => $user, 'role' => $role]);
+        return view('dashboard', [
+            'user' => $user, 
+            'role' => $role,
+            'isAdmin' => $isAdminOrVP, // untuk backward compatibility dengan view
+            'isAdminOrVP' => $isAdminOrVP,
+            'biroName' => $biroName,
+        ]);
     }
 }
