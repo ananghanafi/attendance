@@ -51,6 +51,7 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
           <div class="tabs" role="tablist">
             <button type="button" class="tab active" data-tab="form">Form Input Kalender Kerja</button>
             <button type="button" class="tab" data-tab="data">Data Kalender Kerja</button>
+            <button type="button" class="tab" data-tab="libur">Kalender Libur</button>
           </div>
         </aside>
         <main>
@@ -192,6 +193,98 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
           </div>
         </div>
       </div>
+
+      <!-- Panel Kalender Libur -->
+      <div id="panel-libur" class="panel">
+        <div class="card">
+          <h2 style="margin:0 0 12px">Kelola Tanggal Libur</h2>
+          <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px">Klik tanggal pada kalender untuk menandai sebagai hari libur. Tanggal libur akan otomatis menonaktifkan pilihan WFO/WFA pada pengajuan.</p>
+
+          @if(session('status'))
+            <div class="status">{{ session('status') }}</div>
+          @endif
+
+          <form method="POST" action="{{ route('kalender.libur.store') }}" id="liburForm">
+            @csrf
+            
+            <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+              <div>
+                <label for="liburBulan">Bulan</label>
+                <select id="liburBulan"></select>
+              </div>
+              <div>
+                <label for="liburTahun">Tahun</label>
+                <select id="liburTahun"></select>
+              </div>
+            </div>
+
+            <div style="margin-top:14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+                <div>
+                  <strong id="liburCalTitle">Kalender</strong>
+                  <div style="font-size:12px;color:var(--muted)">Klik tanggal untuk memilih/batalkan sebagai hari libur</div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button type="button" class="btn" id="liburPrevMonth" title="Bulan sebelumnya">‹ Bulan</button>
+                  <button type="button" class="btn" id="liburNextMonth" title="Bulan berikutnya">Bulan ›</button>
+                </div>
+              </div>
+
+              <div class="calendar" id="liburCalendar">
+                <!-- calendar days -->
+              </div>
+            </div>
+
+            <div style="margin-top:14px">
+              <label>Tanggal Terpilih:</label>
+              <div id="selectedDatesContainer" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;min-height:40px;padding:12px;background:#f8fafc;border-radius:12px;border:1px solid #eef0f6">
+                <span style="color:var(--text-muted);font-size:13px" id="noDateSelected">Belum ada tanggal dipilih</span>
+              </div>
+              <input type="hidden" name="tanggal[]" id="hiddenDates">
+            </div>
+
+            <div class="actions">
+              <button type="button" class="btn" id="clearSelectedDates" style="margin-right:8px">Hapus Semua Pilihan</button>
+              <button type="submit" class="btn primary" id="submitLiburBtn" disabled>Simpan Tanggal Libur</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <h2 style="margin:0 0 12px">Data Tanggal Libur</h2>
+          
+          <div style="margin-bottom:16px">
+            <input 
+              type="text" 
+              id="searchLibur" 
+              placeholder="🔍 Cari tanggal libur..." 
+              style="width:100%;padding:11px 12px;border:1px solid #eef0f6;border-radius:12px;background:#fff;outline:none;font-size:14px"
+            >
+          </div>
+
+          <div class="tableScroll">
+            <table id="tableLibur" width="100%">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Tanggal</th>
+                  <th>Hari</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="liburTableBody">
+                <tr id="loadingLibur">
+                  <td colspan="4" style="text-align:center;color:var(--text-muted)">Memuat data...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="noResultsLibur" style="display:none;text-align:center;padding:20px;color:var(--text-muted)">
+            Tidak ada data yang cocok dengan pencarian.
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 @endsection
@@ -201,12 +294,19 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
       const tabs = document.querySelectorAll('.tab');
       const panelForm = document.getElementById('panel-form');
       const panelData = document.getElementById('panel-data');
+      const panelLibur = document.getElementById('panel-libur');
       tabs.forEach(t => t.addEventListener('click', () => {
         tabs.forEach(x => x.classList.remove('active'));
         t.classList.add('active');
         const key = t.getAttribute('data-tab');
         panelForm.classList.toggle('active', key === 'form');
         panelData.classList.toggle('active', key === 'data');
+        panelLibur.classList.toggle('active', key === 'libur');
+        
+        // Load libur data when switching to libur tab
+        if (key === 'libur') {
+          loadLiburData();
+        }
       }));
 
       // --- Dropdown bulan & tahun ---
@@ -459,4 +559,325 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
           }
         });
       }
+
+      // =====================
+      // KALENDER LIBUR
+      // =====================
+      
+      const hariNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      let liburData = [];
+      let selectedLiburDates = []; // Array tanggal yang dipilih
+      let liburViewYear = null;
+      let liburViewMonth = null;
+
+      // Init dropdown bulan & tahun untuk libur
+      const liburBulanEl = document.getElementById('liburBulan');
+      const liburTahunEl = document.getElementById('liburTahun');
+      const liburCalEl = document.getElementById('liburCalendar');
+      const liburCalTitle = document.getElementById('liburCalTitle');
+
+      function initLiburBulan() {
+        liburBulanEl.innerHTML = '';
+        bulanNames.forEach((n, i) => {
+          const opt = document.createElement('option');
+          opt.value = String(i + 1);
+          opt.textContent = n;
+          liburBulanEl.appendChild(opt);
+        });
+      }
+
+      function initLiburTahun() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const years = [y - 1, y, y + 1, y + 2];
+        liburTahunEl.innerHTML = '';
+        years.forEach(yy => {
+          const opt = document.createElement('option');
+          opt.value = String(yy);
+          opt.textContent = String(yy);
+          liburTahunEl.appendChild(opt);
+        });
+        liburTahunEl.value = String(y);
+      }
+
+      function setLiburViewMonth(year, month) {
+        liburViewYear = year;
+        liburViewMonth = month;
+      }
+
+      function syncLiburDropdownToView() {
+        liburBulanEl.value = String(liburViewMonth);
+        liburTahunEl.value = String(liburViewYear);
+      }
+
+      function shiftLiburViewMonth(delta) {
+        const d = new Date(liburViewYear, liburViewMonth - 1, 1);
+        d.setMonth(d.getMonth() + delta);
+        setLiburViewMonth(d.getFullYear(), d.getMonth() + 1);
+        syncLiburDropdownToView();
+        buildLiburCalendar();
+      }
+
+      document.getElementById('liburPrevMonth').addEventListener('click', () => shiftLiburViewMonth(-1));
+      document.getElementById('liburNextMonth').addEventListener('click', () => shiftLiburViewMonth(1));
+
+      function buildLiburCalendar() {
+        if (liburViewYear === null || liburViewMonth === null) {
+          const now = new Date();
+          setLiburViewMonth(now.getFullYear(), now.getMonth() + 1);
+        }
+
+        liburCalTitle.textContent = `Kalender ${bulanNames[liburViewMonth-1]} ${liburViewYear}`;
+
+        const heads = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+        liburCalEl.innerHTML = '';
+        heads.forEach(h => {
+          const el = document.createElement('div');
+          el.className = 'cal-head';
+          el.textContent = h;
+          liburCalEl.appendChild(el);
+        });
+
+        const firstOfView = new Date(liburViewYear, liburViewMonth - 1, 1);
+        const daysInView = new Date(liburViewYear, liburViewMonth, 0).getDate();
+        const firstIdx = firstOfView.getDay();
+        const weeksInView = Math.ceil((firstIdx + daysInView) / 7);
+
+        const gridStart = new Date(liburViewYear, liburViewMonth - 1, 1 - firstIdx);
+        const totalCells = weeksInView * 7;
+
+        for (let i = 0; i < totalCells; i++) {
+          const date = new Date(gridStart);
+          date.setDate(gridStart.getDate() + i);
+
+          const el = document.createElement('div');
+          el.className = 'date';
+          el.textContent = String(date.getDate());
+
+          const iso = ymd(date);
+
+          if (date.getMonth() + 1 !== liburViewMonth || date.getFullYear() !== liburViewYear) {
+            el.style.opacity = '0.55';
+          }
+
+          // Check if date is already selected
+          if (selectedLiburDates.includes(iso)) {
+            el.classList.add('selected');
+            el.style.background = '#fee2e2';
+            el.style.borderColor = '#fca5a5';
+            el.style.color = '#991b1b';
+          }
+
+          el.addEventListener('click', () => {
+            toggleLiburDate(iso, el);
+          });
+
+          liburCalEl.appendChild(el);
+        }
+      }
+
+      function toggleLiburDate(iso, el) {
+        const index = selectedLiburDates.indexOf(iso);
+        if (index > -1) {
+          // Remove from selection
+          selectedLiburDates.splice(index, 1);
+          el.classList.remove('selected');
+          el.style.background = '';
+          el.style.borderColor = '';
+          el.style.color = '';
+        } else {
+          // Add to selection
+          selectedLiburDates.push(iso);
+          el.classList.add('selected');
+          el.style.background = '#fee2e2';
+          el.style.borderColor = '#fca5a5';
+          el.style.color = '#991b1b';
+        }
+        updateSelectedDatesDisplay();
+      }
+
+      function updateSelectedDatesDisplay() {
+        const container = document.getElementById('selectedDatesContainer');
+        const noDateText = document.getElementById('noDateSelected');
+        const submitBtn = document.getElementById('submitLiburBtn');
+
+        if (selectedLiburDates.length === 0) {
+          container.innerHTML = '<span style="color:var(--text-muted);font-size:13px" id="noDateSelected">Belum ada tanggal dipilih</span>';
+          submitBtn.disabled = true;
+          return;
+        }
+
+        // Sort dates
+        const sorted = [...selectedLiburDates].sort();
+        
+        container.innerHTML = sorted.map(d => {
+          const date = new Date(d);
+          const hari = hariNames[date.getDay()];
+          return `
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#fee2e2;color:#991b1b;border-radius:8px;font-size:13px;border:1px solid #fca5a5">
+              ${d} (${hari})
+              <button type="button" onclick="removeLiburDate('${d}')" style="background:none;border:none;color:#991b1b;cursor:pointer;font-weight:bold;padding:0;line-height:1">✕</button>
+            </span>
+          `;
+        }).join('');
+
+        submitBtn.disabled = false;
+      }
+
+      function removeLiburDate(iso) {
+        const index = selectedLiburDates.indexOf(iso);
+        if (index > -1) {
+          selectedLiburDates.splice(index, 1);
+          buildLiburCalendar(); // Rebuild to update visual
+          updateSelectedDatesDisplay();
+        }
+      }
+
+      // Clear all selected dates
+      document.getElementById('clearSelectedDates').addEventListener('click', () => {
+        selectedLiburDates = [];
+        buildLiburCalendar();
+        updateSelectedDatesDisplay();
+      });
+
+      // Handle form submit - populate hidden inputs
+      document.getElementById('liburForm').addEventListener('submit', function(e) {
+        if (selectedLiburDates.length === 0) {
+          e.preventDefault();
+          alert('Pilih minimal 1 tanggal libur.');
+          return;
+        }
+
+        // Remove old hidden inputs
+        this.querySelectorAll('input[name="tanggal[]"]').forEach(el => el.remove());
+
+        // Add hidden inputs for each selected date
+        selectedLiburDates.forEach(d => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'tanggal[]';
+          input.value = d;
+          this.appendChild(input);
+        });
+      });
+
+      // Dropdown change
+      [liburBulanEl, liburTahunEl].forEach(el => el.addEventListener('change', () => {
+        setLiburViewMonth(parseInt(liburTahunEl.value, 10), parseInt(liburBulanEl.value, 10));
+        buildLiburCalendar();
+      }));
+
+      // Load libur data from API
+      async function loadLiburData() {
+        const tbody = document.getElementById('liburTableBody');
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">Memuat data...</td></tr>';
+        
+        try {
+          const response = await fetch('{{ route("kalender.libur.index") }}', {
+            headers: {
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            liburData = result.data;
+            renderLiburTable(liburData);
+          } else {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#991b1b">Gagal memuat data.</td></tr>';
+          }
+        } catch (error) {
+          console.error('Error loading libur data:', error);
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#991b1b">Gagal memuat data.</td></tr>';
+        }
+      }
+
+      // Render libur table
+      function renderLiburTable(data) {
+        const tbody = document.getElementById('liburTableBody');
+        
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted)">Belum ada tanggal libur.</td></tr>';
+          return;
+        }
+        
+        tbody.innerHTML = data.map((item, index) => {
+          const date = new Date(item.tanggal);
+          const hari = hariNames[date.getDay()];
+          return `
+            <tr class="libur-row" data-tanggal="${item.tanggal}">
+              <td>${index + 1}</td>
+              <td>${item.tanggal}</td>
+              <td>${hari}</td>
+              <td>
+                <button type="button" onclick="deleteLibur(${item.id})" class="btn" style="padding:8px 10px;border-radius:8px;border:1px solid #fecdd3;background:#fff1f2;color:#991b1b">Hapus</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Delete libur
+      async function deleteLibur(id) {
+        if (!confirm('Yakin hapus tanggal libur ini?')) return;
+        
+        try {
+          const response = await fetch(`{{ url('/kalender-kerja/libur') }}/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            loadLiburData(); // Reload table
+          } else {
+            alert(result.message || 'Gagal menghapus tanggal libur.');
+          }
+        } catch (error) {
+          console.error('Error deleting libur:', error);
+          alert('Gagal menghapus tanggal libur.');
+        }
+      }
+
+      // Search libur
+      const searchLiburInput = document.getElementById('searchLibur');
+      if (searchLiburInput) {
+        searchLiburInput.addEventListener('input', function() {
+          const term = this.value.toLowerCase().trim();
+          const rows = document.querySelectorAll('.libur-row');
+          const noResultsLibur = document.getElementById('noResultsLibur');
+          let visibleCount = 0;
+          
+          rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(term)) {
+              row.style.display = '';
+              visibleCount++;
+            } else {
+              row.style.display = 'none';
+            }
+          });
+          
+          noResultsLibur.style.display = visibleCount === 0 && liburData.length > 0 ? 'block' : 'none';
+        });
+      }
+
+      // Initialize libur calendar
+      initLiburBulan();
+      initLiburTahun();
+      const nowLibur = new Date();
+      liburBulanEl.value = String(nowLibur.getMonth() + 1);
+      setLiburViewMonth(parseInt(liburTahunEl.value, 10), parseInt(liburBulanEl.value, 10));
+      buildLiburCalendar();
+      updateSelectedDatesDisplay();
+
+      // Make functions available globally
+      window.removeLiburDate = removeLiburDate;
+      window.deleteLibur = deleteLibur;
 @endsection

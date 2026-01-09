@@ -55,10 +55,18 @@
     transform: translateY(-1px);
   }
   
+  .info-card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e7eaf3;
+    box-shadow: 0 4px 20px rgba(35,45,120,.08);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  
   .info-grid {
     display: grid;
     gap: 1rem;
-    margin-bottom: 2rem;
   }
   
   .info-item {
@@ -89,12 +97,37 @@
   .radio-cell input[type="radio"]:disabled {
     opacity: 0.6;
   }
+
+  /* Holiday styling */
+  .libur-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fef2f2;
+    color: #991b1b;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #fecaca;
+    margin-top: 2px;
+  }
+  
+  .holiday-col {
+    background: #fee2e2 !important;
+    position: relative;
+  }
+  
+  .holiday-header {
+    background: #fecaca !important;
+  }
   
   .table-section {
     background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-radius: 16px;
+    border: 1px solid #e7eaf3;
+    box-shadow: 0 4px 20px rgba(35,45,120,.08);
+    padding: 24px;
   }
   
   .table-section h2 {
@@ -272,35 +305,37 @@
   
   <h1>VIEW PENGAJUAN PEGAWAI WAO MINGGU {{ $pengajuan->minggu ?? '-' }} BULAN {{ $pengajuan->bulan ?? '-' }} TAHUN {{ $pengajuan->tahun ?? '-' }}</h1>
   
-  <div class="info-grid">
-    <div class="info-item">
-      <div class="info-label">Unit Kerja</div>
-      <div class="info-value">{{ $pengajuan->biro_name }}</div>
-    </div>
-    
-    <div class="info-item">
-      <div class="info-label">Tahun</div>
-      <div class="info-value">{{ $pengajuan->tahun ?? '-' }}</div>
-    </div>
-    
-    <div class="info-item">
-      <div class="info-label">Bulan</div>
-      <div class="info-value">{{ $pengajuan->bulan ?? '-' }}</div>
-    </div>
-    
-    <div class="info-item">
-      <div class="info-label">Minggu</div>
-      <div class="info-value">{{ $pengajuan->minggu ?? '-' }}</div>
-    </div>
-    
-    <div class="info-item">
-      <div class="info-label">Periode</div>
-      <div class="info-value">
-        @if($pengajuan->tgl_awal && $pengajuan->tgl_akhir)
-          {{ \Carbon\Carbon::parse($pengajuan->tgl_awal)->format('d-M-Y') }} sd {{ \Carbon\Carbon::parse($pengajuan->tgl_akhir)->format('d-M-Y') }}
-        @else
-          -
-        @endif
+  <div class="info-card">
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-label">Unit Kerja</div>
+        <div class="info-value">{{ $pengajuan->biro_name }}</div>
+      </div>
+      
+      <div class="info-item">
+        <div class="info-label">Tahun</div>
+        <div class="info-value">{{ $pengajuan->tahun ?? '-' }}</div>
+      </div>
+      
+      <div class="info-item">
+        <div class="info-label">Bulan</div>
+        <div class="info-value">{{ $pengajuan->bulan ?? '-' }}</div>
+      </div>
+      
+      <div class="info-item">
+        <div class="info-label">Minggu</div>
+        <div class="info-value">{{ $pengajuan->minggu ?? '-' }}</div>
+      </div>
+      
+      <div class="info-item">
+        <div class="info-label">Periode</div>
+        <div class="info-value">
+          @if($pengajuan->tgl_awal && $pengajuan->tgl_akhir)
+            {{ \Carbon\Carbon::parse($pengajuan->tgl_awal)->format('d-M-Y') }} sd {{ \Carbon\Carbon::parse($pengajuan->tgl_akhir)->format('d-M-Y') }}
+          @else
+            -
+          @endif
+        </div>
       </div>
     </div>
   </div>
@@ -337,25 +372,50 @@
           <tr>
             <th rowspan="2" class="text-left col-nip">NIP</th>
             <th rowspan="2" class="text-left col-nama">Nama Pegawai</th>
-            <th colspan="2" class="senin-col col-day-header">Senin</th>
-            <th colspan="2" class="selasa-col col-day-header">Selasa</th>
-            <th colspan="2" class="rabu-col col-day-header">Rabu</th>
-            <th colspan="2" class="kamis-col col-day-header">Kamis</th>
-            <th colspan="2" class="jumat-col col-day-header">Jum'at</th>
+            <th colspan="2" class="senin-col col-day-header {{ ($hariLibur['senin'] ?? false) ? 'holiday-header' : '' }}">
+              Senin
+              @if($hariLibur['senin'] ?? false)
+                <div class="libur-badge">LIBUR</div>
+              @endif
+            </th>
+            <th colspan="2" class="selasa-col col-day-header {{ ($hariLibur['selasa'] ?? false) ? 'holiday-header' : '' }}">
+              Selasa
+              @if($hariLibur['selasa'] ?? false)
+                <div class="libur-badge">LIBUR</div>
+              @endif
+            </th>
+            <th colspan="2" class="rabu-col col-day-header {{ ($hariLibur['rabu'] ?? false) ? 'holiday-header' : '' }}">
+              Rabu
+              @if($hariLibur['rabu'] ?? false)
+                <div class="libur-badge">LIBUR</div>
+              @endif
+            </th>
+            <th colspan="2" class="kamis-col col-day-header {{ ($hariLibur['kamis'] ?? false) ? 'holiday-header' : '' }}">
+              Kamis
+              @if($hariLibur['kamis'] ?? false)
+                <div class="libur-badge">LIBUR</div>
+              @endif
+            </th>
+            <th colspan="2" class="jumat-col col-day-header {{ ($hariLibur['jumat'] ?? false) ? 'holiday-header' : '' }}">
+              Jum'at
+              @if($hariLibur['jumat'] ?? false)
+                <div class="libur-badge">LIBUR</div>
+              @endif
+            </th>
             <th colspan="2" class="col-day-header">Jumlah</th>
             <th colspan="2" class="col-day-header">%</th>
           </tr>
           <tr>
-            <th class="senin-col col-day">WFO</th>
-            <th class="senin-col col-day">WFA</th>
-            <th class="selasa-col col-day">WFO</th>
-            <th class="selasa-col col-day">WFA</th>
-            <th class="rabu-col col-day">WFO</th>
-            <th class="rabu-col col-day">WFA</th>
-            <th class="kamis-col col-day">WFO</th>
-            <th class="kamis-col col-day">WFA</th>
-            <th class="jumat-col col-day">WFO</th>
-            <th class="jumat-col col-day">WFA</th>
+            <th class="senin-col col-day {{ ($hariLibur['senin'] ?? false) ? 'holiday-header' : '' }}">WFO</th>
+            <th class="senin-col col-day {{ ($hariLibur['senin'] ?? false) ? 'holiday-header' : '' }}">WFA</th>
+            <th class="selasa-col col-day {{ ($hariLibur['selasa'] ?? false) ? 'holiday-header' : '' }}">WFO</th>
+            <th class="selasa-col col-day {{ ($hariLibur['selasa'] ?? false) ? 'holiday-header' : '' }}">WFA</th>
+            <th class="rabu-col col-day {{ ($hariLibur['rabu'] ?? false) ? 'holiday-header' : '' }}">WFO</th>
+            <th class="rabu-col col-day {{ ($hariLibur['rabu'] ?? false) ? 'holiday-header' : '' }}">WFA</th>
+            <th class="kamis-col col-day {{ ($hariLibur['kamis'] ?? false) ? 'holiday-header' : '' }}">WFO</th>
+            <th class="kamis-col col-day {{ ($hariLibur['kamis'] ?? false) ? 'holiday-header' : '' }}">WFA</th>
+            <th class="jumat-col col-day {{ ($hariLibur['jumat'] ?? false) ? 'holiday-header' : '' }}">WFO</th>
+            <th class="jumat-col col-day {{ ($hariLibur['jumat'] ?? false) ? 'holiday-header' : '' }}">WFA</th>
             <th class="col-day">WFO</th>
             <th class="col-day">WFA</th>
             <th class="col-day">WFO</th>
@@ -372,16 +432,16 @@
           <!-- Summary Row: Jumlah -->
           <tr class="summary-row totals">
             <td colspan="2" class="text-left col-nama">Jumlah</td>
-            <td class="senin-wfo-total senin-col col-day">0</td>
-            <td class="senin-wfa-total senin-col col-day">0</td>
-            <td class="selasa-wfo-total selasa-col col-day">0</td>
-            <td class="selasa-wfa-total selasa-col col-day">0</td>
-            <td class="rabu-wfo-total rabu-col col-day">0</td>
-            <td class="rabu-wfa-total rabu-col col-day">0</td>
-            <td class="kamis-wfo-total kamis-col col-day">0</td>
-            <td class="kamis-wfa-total kamis-col col-day">0</td>
-            <td class="jumat-wfo-total jumat-col col-day">0</td>
-            <td class="jumat-wfa-total jumat-col col-day">0</td>
+            <td class="senin-wfo-total senin-col col-day {{ ($hariLibur['senin'] ?? false) ? 'holiday-col' : '' }}">0</td>
+            <td class="senin-wfa-total senin-col col-day {{ ($hariLibur['senin'] ?? false) ? 'holiday-col' : '' }}">0</td>
+            <td class="selasa-wfo-total selasa-col col-day {{ ($hariLibur['selasa'] ?? false) ? 'holiday-col' : '' }}">0</td>
+            <td class="selasa-wfa-total selasa-col col-day {{ ($hariLibur['selasa'] ?? false) ? 'holiday-col' : '' }}">0</td>
+            <td class="rabu-wfo-total rabu-col col-day {{ ($hariLibur['rabu'] ?? false) ? 'holiday-col' : '' }}">0</td>
+            <td class="rabu-wfa-total rabu-col col-day {{ ($hariLibur['rabu'] ?? false) ? 'holiday-col' : '' }}">0</td>
+            <td class="kamis-wfo-total kamis-col col-day {{ ($hariLibur['kamis'] ?? false) ? 'holiday-col' : '' }}">0</td>
+            <td class="kamis-wfa-total kamis-col col-day {{ ($hariLibur['kamis'] ?? false) ? 'holiday-col' : '' }}">0</td>
+            <td class="jumat-wfo-total jumat-col col-day {{ ($hariLibur['jumat'] ?? false) ? 'holiday-col' : '' }}">0</td>
+            <td class="jumat-wfa-total jumat-col col-day {{ ($hariLibur['jumat'] ?? false) ? 'holiday-col' : '' }}">0</td>
             <td class="col-day">-</td>
             <td class="col-day">-</td>
             <td class="col-day">-</td>
@@ -391,16 +451,16 @@
           <!-- Summary Row: Persentase -->
           <tr class="summary-row percentages">
             <td colspan="2" class="text-left col-nama">Persentase</td>
-            <td class="percentage-cell wfo senin-wfo-percentage senin-col col-day">0%</td>
-            <td class="percentage-cell wfa senin-wfa-percentage senin-col col-day">0%</td>
-            <td class="percentage-cell wfo selasa-wfo-percentage selasa-col col-day">0%</td>
-            <td class="percentage-cell wfa selasa-wfa-percentage selasa-col col-day">0%</td>
-            <td class="percentage-cell wfo rabu-wfo-percentage rabu-col col-day">0%</td>
-            <td class="percentage-cell wfa rabu-wfa-percentage rabu-col col-day">0%</td>
-            <td class="percentage-cell wfo kamis-wfo-percentage kamis-col col-day">0%</td>
-            <td class="percentage-cell wfa kamis-wfa-percentage kamis-col col-day">0%</td>
-            <td class="percentage-cell wfo jumat-wfo-percentage jumat-col col-day">0%</td>
-            <td class="percentage-cell wfa jumat-wfa-percentage jumat-col col-day">0%</td>
+            <td class="percentage-cell wfo senin-wfo-percentage senin-col col-day {{ ($hariLibur['senin'] ?? false) ? 'holiday-col' : '' }}">0%</td>
+            <td class="percentage-cell wfa senin-wfa-percentage senin-col col-day {{ ($hariLibur['senin'] ?? false) ? 'holiday-col' : '' }}">0%</td>
+            <td class="percentage-cell wfo selasa-wfo-percentage selasa-col col-day {{ ($hariLibur['selasa'] ?? false) ? 'holiday-col' : '' }}">0%</td>
+            <td class="percentage-cell wfa selasa-wfa-percentage selasa-col col-day {{ ($hariLibur['selasa'] ?? false) ? 'holiday-col' : '' }}">0%</td>
+            <td class="percentage-cell wfo rabu-wfo-percentage rabu-col col-day {{ ($hariLibur['rabu'] ?? false) ? 'holiday-col' : '' }}">0%</td>
+            <td class="percentage-cell wfa rabu-wfa-percentage rabu-col col-day {{ ($hariLibur['rabu'] ?? false) ? 'holiday-col' : '' }}">0%</td>
+            <td class="percentage-cell wfo kamis-wfo-percentage kamis-col col-day {{ ($hariLibur['kamis'] ?? false) ? 'holiday-col' : '' }}">0%</td>
+            <td class="percentage-cell wfa kamis-wfa-percentage kamis-col col-day {{ ($hariLibur['kamis'] ?? false) ? 'holiday-col' : '' }}">0%</td>
+            <td class="percentage-cell wfo jumat-wfo-percentage jumat-col col-day {{ ($hariLibur['jumat'] ?? false) ? 'holiday-col' : '' }}">0%</td>
+            <td class="percentage-cell wfa jumat-wfa-percentage jumat-col col-day {{ ($hariLibur['jumat'] ?? false) ? 'holiday-col' : '' }}">0%</td>
             <td class="col-day">-</td>
             <td class="col-day">-</td>
             <td class="col-day">-</td>
@@ -428,43 +488,43 @@
               <td class="text-left col-nama">{{ strtoupper($detail->nama) }}</td>
               
               <!-- Senin -->
-              <td class="radio-cell senin-col col-day">
-                <input type="radio" name="attendance[{{ $detail->nip }}][senin]" value="1" {{ $detail->senin ? 'checked' : '' }} class="day-radio" data-day="senin" {{ $readOnly ? 'disabled' : '' }}>
+              <td class="radio-cell senin-col col-day {{ ($hariLibur['senin'] ?? false) ? 'holiday-col' : '' }}">
+                <input type="radio" name="attendance[{{ $detail->nip }}][senin]" value="1" {{ $detail->senin ? 'checked' : '' }} class="day-radio" data-day="senin" {{ $readOnly || ($hariLibur['senin'] ?? false) ? 'disabled' : '' }}>
               </td>
-              <td class="radio-cell senin-col col-day">
-                <input type="radio" name="attendance[{{ $detail->nip }}][senin]" value="0" {{ !$detail->senin ? 'checked' : '' }} class="day-radio" data-day="senin" {{ $readOnly ? 'disabled' : '' }}>
+              <td class="radio-cell senin-col col-day {{ ($hariLibur['senin'] ?? false) ? 'holiday-col' : '' }}">
+                <input type="radio" name="attendance[{{ $detail->nip }}][senin]" value="0" {{ !$detail->senin ? 'checked' : '' }} class="day-radio" data-day="senin" {{ $readOnly || ($hariLibur['senin'] ?? false) ? 'disabled' : '' }}>
               </td>
               
               <!-- Selasa -->
-              <td class="radio-cell selasa-col col-day">
-                <input type="radio" name="attendance[{{ $detail->nip }}][selasa]" value="1" {{ $detail->selasa ? 'checked' : '' }} class="day-radio" data-day="selasa" {{ $readOnly ? 'disabled' : '' }}>
+              <td class="radio-cell selasa-col col-day {{ ($hariLibur['selasa'] ?? false) ? 'holiday-col' : '' }}">
+                <input type="radio" name="attendance[{{ $detail->nip }}][selasa]" value="1" {{ $detail->selasa ? 'checked' : '' }} class="day-radio" data-day="selasa" {{ $readOnly || ($hariLibur['selasa'] ?? false) ? 'disabled' : '' }}>
               </td>
-              <td class="radio-cell selasa-col col-day">
-                <input type="radio" name="attendance[{{ $detail->nip }}][selasa]" value="0" {{ !$detail->selasa ? 'checked' : '' }} class="day-radio" data-day="selasa" {{ $readOnly ? 'disabled' : '' }}>
+              <td class="radio-cell selasa-col col-day {{ ($hariLibur['selasa'] ?? false) ? 'holiday-col' : '' }}">
+                <input type="radio" name="attendance[{{ $detail->nip }}][selasa]" value="0" {{ !$detail->selasa ? 'checked' : '' }} class="day-radio" data-day="selasa" {{ $readOnly || ($hariLibur['selasa'] ?? false) ? 'disabled' : '' }}>
               </td>
               
               <!-- Rabu -->
-              <td class="radio-cell rabu-col col-day">
-                <input type="radio" name="attendance[{{ $detail->nip }}][rabu]" value="1" {{ $detail->rabu ? 'checked' : '' }} class="day-radio" data-day="rabu" {{ $readOnly ? 'disabled' : '' }}>
+              <td class="radio-cell rabu-col col-day {{ ($hariLibur['rabu'] ?? false) ? 'holiday-col' : '' }}">
+                <input type="radio" name="attendance[{{ $detail->nip }}][rabu]" value="1" {{ $detail->rabu ? 'checked' : '' }} class="day-radio" data-day="rabu" {{ $readOnly || ($hariLibur['rabu'] ?? false) ? 'disabled' : '' }}>
               </td>
-              <td class="radio-cell rabu-col col-day">
-                <input type="radio" name="attendance[{{ $detail->nip }}][rabu]" value="0" {{ !$detail->rabu ? 'checked' : '' }} class="day-radio" data-day="rabu" {{ $readOnly ? 'disabled' : '' }}>
+              <td class="radio-cell rabu-col col-day {{ ($hariLibur['rabu'] ?? false) ? 'holiday-col' : '' }}">
+                <input type="radio" name="attendance[{{ $detail->nip }}][rabu]" value="0" {{ !$detail->rabu ? 'checked' : '' }} class="day-radio" data-day="rabu" {{ $readOnly || ($hariLibur['rabu'] ?? false) ? 'disabled' : '' }}>
               </td>
               
               <!-- Kamis -->
-              <td class="radio-cell kamis-col col-day">
-                <input type="radio" name="attendance[{{ $detail->nip }}][kamis]" value="1" {{ $detail->kamis ? 'checked' : '' }} class="day-radio" data-day="kamis" {{ $readOnly ? 'disabled' : '' }}>
+              <td class="radio-cell kamis-col col-day {{ ($hariLibur['kamis'] ?? false) ? 'holiday-col' : '' }}">
+                <input type="radio" name="attendance[{{ $detail->nip }}][kamis]" value="1" {{ $detail->kamis ? 'checked' : '' }} class="day-radio" data-day="kamis" {{ $readOnly || ($hariLibur['kamis'] ?? false) ? 'disabled' : '' }}>
               </td>
-              <td class="radio-cell kamis-col col-day">
-                <input type="radio" name="attendance[{{ $detail->nip }}][kamis]" value="0" {{ !$detail->kamis ? 'checked' : '' }} class="day-radio" data-day="kamis" {{ $readOnly ? 'disabled' : '' }}>
+              <td class="radio-cell kamis-col col-day {{ ($hariLibur['kamis'] ?? false) ? 'holiday-col' : '' }}">
+                <input type="radio" name="attendance[{{ $detail->nip }}][kamis]" value="0" {{ !$detail->kamis ? 'checked' : '' }} class="day-radio" data-day="kamis" {{ $readOnly || ($hariLibur['kamis'] ?? false) ? 'disabled' : '' }}>
               </td>
               
               <!-- Jumat -->
-              <td class="radio-cell jumat-col col-day">
-                <input type="radio" name="attendance[{{ $detail->nip }}][jumat]" value="1" {{ $detail->jumat ? 'checked' : '' }} class="day-radio" data-day="jumat" {{ $readOnly ? 'disabled' : '' }}>
+              <td class="radio-cell jumat-col col-day {{ ($hariLibur['jumat'] ?? false) ? 'holiday-col' : '' }}">
+                <input type="radio" name="attendance[{{ $detail->nip }}][jumat]" value="1" {{ $detail->jumat ? 'checked' : '' }} class="day-radio" data-day="jumat" {{ $readOnly || ($hariLibur['jumat'] ?? false) ? 'disabled' : '' }}>
               </td>
-              <td class="radio-cell jumat-col col-day">
-                <input type="radio" name="attendance[{{ $detail->nip }}][jumat]" value="0" {{ !$detail->jumat ? 'checked' : '' }} class="day-radio" data-day="jumat" {{ $readOnly ? 'disabled' : '' }}>
+              <td class="radio-cell jumat-col col-day {{ ($hariLibur['jumat'] ?? false) ? 'holiday-col' : '' }}">
+                <input type="radio" name="attendance[{{ $detail->nip }}][jumat]" value="0" {{ !$detail->jumat ? 'checked' : '' }} class="day-radio" data-day="jumat" {{ $readOnly || ($hariLibur['jumat'] ?? false) ? 'disabled' : '' }}>
               </td>
               
               <!-- Jumlah WFO/WFA -->

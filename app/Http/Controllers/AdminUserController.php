@@ -244,7 +244,16 @@ class AdminUserController extends Controller
         $validated = $request->validate([
             'nama' => ['required', 'string', 'max:50'],
             'username' => ['required', 'string', 'max:35', 'unique:users,username'],
-            'password' => ['required', 'string', 'min:8', 'max:255'],
+            'password' => [
+                'required', 
+                'string', 
+                'min:8', 
+                'max:255',
+                'regex:/[a-z]/',      // minimal 1 huruf kecil
+                'regex:/[A-Z]/',      // minimal 1 huruf besar
+                'regex:/[0-9]/',      // minimal 1 angka
+                'regex:/[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?`~]/', // minimal 1 simbol
+            ],
             'role_id' => ['required', 'integer', 'exists:roles,id'],
 
             'nip' => ['required', 'string', 'max:35'],
@@ -263,6 +272,8 @@ class AdminUserController extends Controller
             'jabatan_id' => ['required', 'integer', 'exists:jabatan,id'],
         ], [
             'username.unique' => 'Username sudah digunakan.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.regex' => 'Password harus mengandung huruf kecil, huruf besar, angka, dan simbol.',
         ]);
 
         // Map jabatan dropdown -> kolom users.jabatan (string)

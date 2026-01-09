@@ -74,6 +74,11 @@ Route::middleware('auth')->group(function () {
     // Hapus Kalender Kerja
     Route::delete('/kalender-kerja/{id}', [AdminKalenderKerjaController::class, 'destroy'])->name('kalender.destroy');
 
+    // Kalender Libur
+    Route::get('/kalender-kerja/libur', [AdminKalenderKerjaController::class, 'liburIndex'])->name('kalender.libur.index');
+    Route::post('/kalender-kerja/libur', [AdminKalenderKerjaController::class, 'liburStore'])->name('kalender.libur.store');
+    Route::delete('/kalender-kerja/libur/{id}', [AdminKalenderKerjaController::class, 'liburDestroy'])->name('kalender.libur.destroy');
+
     // Pengajuan WFO
     Route::get('/pengajuan', [PengajuanWfoController::class, 'index'])->name('pengajuan.index');
     Route::post('/pengajuan/set-view', [PengajuanWfoController::class, 'setView'])->name('pengajuan.setView');

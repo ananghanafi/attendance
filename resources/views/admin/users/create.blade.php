@@ -31,6 +31,112 @@
       .select2-search--dropdown .select2-search__field{padding:8px;border:1px solid #eef0f6;border-radius:6px;font-family:inherit;font-size:14px}
       .select2-results__option{padding:8px 12px;font-family:inherit;font-size:14px}
       .select2-container--default .select2-results__option--highlighted[aria-selected]{background:var(--accent);color:#fff}
+      
+      /* Password Strength Indicator */
+      .password-wrapper{position:relative}
+      .password-strength{
+        margin-top:8px;
+        padding:12px;
+        background:#f8fafc;
+        border-radius:8px;
+        border:1px solid #e2e8f0;
+        max-height:0;
+        overflow:hidden;
+        opacity:0;
+        transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+        padding:0 12px;
+        margin-top:0;
+      }
+      .password-strength.show{
+        max-height:300px;
+        opacity:1;
+        padding:12px;
+        margin-top:8px;
+      }
+      .password-strength.hide-complete{
+        max-height:0;
+        opacity:0;
+        padding:0 12px;
+        margin-top:0;
+      }
+      .strength-title{font-size:12px;font-weight:600;color:#374151;margin-bottom:8px}
+      .strength-bar{height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;margin-bottom:10px}
+      .strength-bar-fill{height:100%;width:0%;transition:width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;border-radius:3px}
+      .strength-bar-fill.weak{background:#ef4444;width:20%}
+      .strength-bar-fill.fair{background:#f97316;width:40%}
+      .strength-bar-fill.good{background:#eab308;width:60%}
+      .strength-bar-fill.strong{background:#22c55e;width:80%}
+      .strength-bar-fill.excellent{background:#10b981;width:100%}
+      .strength-list{display:flex;flex-direction:column;gap:4px}
+      .strength-item{
+        display:flex;
+        align-items:center;
+        gap:8px;
+        font-size:12px;
+        color:#6b7280;
+        transition: opacity 0.3s ease, transform 0.3s ease, color 0.3s ease;
+        transform: translateX(0);
+      }
+      .strength-item.valid{color:#16a34a;transform:translateX(4px)}
+      .strength-item.invalid{color:#dc2626}
+      .strength-icon{
+        width:16px;
+        height:16px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:11px;
+        transition: transform 0.3s ease, color 0.3s ease;
+      }
+      .strength-icon.valid{color:#16a34a;transform:scale(1.2)}
+      .strength-icon.invalid{color:#dc2626;transform:scale(1)}
+      .strength-label{
+        font-size:12px;
+        font-weight:500;
+        margin-top:8px;
+        transition: color 0.3s ease;
+      }
+      .strength-label.weak{color:#ef4444}
+      .strength-label.fair{color:#f97316}
+      .strength-label.good{color:#eab308}
+      .strength-label.strong{color:#22c55e}
+      .strength-label.excellent{color:#10b981}
+      
+      /* Success checkmark animation */
+      @keyframes checkPop {
+        0% { transform: scale(0); }
+        50% { transform: scale(1.4); }
+        100% { transform: scale(1.2); }
+      }
+      .strength-icon.valid.animate {
+        animation: checkPop 0.3s ease forwards;
+      }
+      
+      /* Complete state - success message */
+      .password-complete {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        padding: 10px 12px;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        border-radius: 8px;
+        color: #065f46;
+        font-size: 13px;
+        font-weight: 500;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      .password-complete.show {
+        display: flex;
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .password-complete-icon {
+        font-size: 16px;
+      }
     </style>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
   </head>
@@ -91,7 +197,42 @@
 
             <div>
               <label for="password">Password</label>
-              <input type="password" id="password" name="password" required minlength="8" maxlength="255" placeholder="min 8 karakter">
+              <div class="password-wrapper">
+                <input type="password" id="password" name="password" required minlength="8" maxlength="255" placeholder="min 8 karakter" autocomplete="new-password">
+                <div class="password-strength" id="passwordStrength">
+                  <div class="strength-title">Kekuatan Password</div>
+                  <div class="strength-bar">
+                    <div class="strength-bar-fill" id="strengthBarFill"></div>
+                  </div>
+                  <div class="strength-label" id="strengthLabel">Sangat Lemah</div>
+                  <div class="strength-list">
+                    <div class="strength-item" id="check-length">
+                      <span class="strength-icon invalid" id="icon-length">✗</span>
+                      <span>Minimal 8 karakter</span>
+                    </div>
+                    <div class="strength-item" id="check-lowercase">
+                      <span class="strength-icon invalid" id="icon-lowercase">✗</span>
+                      <span>Huruf kecil (a-z)</span>
+                    </div>
+                    <div class="strength-item" id="check-uppercase">
+                      <span class="strength-icon invalid" id="icon-uppercase">✗</span>
+                      <span>Huruf besar (A-Z)</span>
+                    </div>
+                    <div class="strength-item" id="check-number">
+                      <span class="strength-icon invalid" id="icon-number">✗</span>
+                      <span>Angka (0-9)</span>
+                    </div>
+                    <div class="strength-item" id="check-symbol">
+                      <span class="strength-icon invalid" id="icon-symbol">✗</span>
+                      <span>Simbol (!@#$%^&*...)</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="password-complete" id="passwordComplete">
+                  <span class="password-complete-icon">✓</span>
+                  <span>Password sudah memenuhi semua kriteria!</span>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -182,6 +323,140 @@
           setTimeout(() => {
             document.querySelector('.select2-search__field').focus();
           }, 100);
+        });
+
+        // Password Strength Checker
+        const passwordInput = document.getElementById('password');
+        const strengthPanel = document.getElementById('passwordStrength');
+        const strengthBarFill = document.getElementById('strengthBarFill');
+        const strengthLabel = document.getElementById('strengthLabel');
+        const passwordComplete = document.getElementById('passwordComplete');
+        const submitBtn = document.querySelector('button[type="submit"]');
+        let previousScore = 0;
+
+        const checks = {
+          length: { el: document.getElementById('check-length'), icon: document.getElementById('icon-length'), test: (p) => p.length >= 8 },
+          lowercase: { el: document.getElementById('check-lowercase'), icon: document.getElementById('icon-lowercase'), test: (p) => /[a-z]/.test(p) },
+          uppercase: { el: document.getElementById('check-uppercase'), icon: document.getElementById('icon-uppercase'), test: (p) => /[A-Z]/.test(p) },
+          number: { el: document.getElementById('check-number'), icon: document.getElementById('icon-number'), test: (p) => /[0-9]/.test(p) },
+          symbol: { el: document.getElementById('check-symbol'), icon: document.getElementById('icon-symbol'), test: (p) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(p) }
+        };
+
+        function updateStrength() {
+          const password = passwordInput.value;
+          let score = 0;
+
+          // Show panel when typing (only if not complete)
+          if (password.length > 0) {
+            strengthPanel.classList.add('show');
+            strengthPanel.classList.remove('hide-complete');
+          } else {
+            strengthPanel.classList.remove('show');
+            passwordComplete.classList.remove('show');
+          }
+
+          // Check each requirement
+          for (const key in checks) {
+            const check = checks[key];
+            const passed = check.test(password);
+            const wasValid = check.el.classList.contains('valid');
+            
+            if (passed) {
+              score++;
+              if (!wasValid) {
+                // Animate when newly valid
+                check.icon.classList.remove('animate');
+                void check.icon.offsetWidth; // Trigger reflow
+                check.icon.classList.add('animate');
+              }
+              check.el.classList.add('valid');
+              check.el.classList.remove('invalid');
+              check.icon.classList.add('valid');
+              check.icon.classList.remove('invalid');
+              check.icon.textContent = '✓';
+            } else {
+              check.el.classList.remove('valid');
+              check.el.classList.add('invalid');
+              check.icon.classList.remove('valid', 'animate');
+              check.icon.classList.add('invalid');
+              check.icon.textContent = '✗';
+            }
+          }
+
+          // Update strength bar and label
+          strengthBarFill.className = 'strength-bar-fill';
+          strengthLabel.className = 'strength-label';
+
+          if (score === 0) {
+            strengthLabel.textContent = 'Sangat Lemah';
+            strengthLabel.classList.add('weak');
+          } else if (score === 1) {
+            strengthBarFill.classList.add('weak');
+            strengthLabel.textContent = 'Sangat Lemah';
+            strengthLabel.classList.add('weak');
+          } else if (score === 2) {
+            strengthBarFill.classList.add('fair');
+            strengthLabel.textContent = 'Lemah';
+            strengthLabel.classList.add('fair');
+          } else if (score === 3) {
+            strengthBarFill.classList.add('good');
+            strengthLabel.textContent = 'Cukup';
+            strengthLabel.classList.add('good');
+          } else if (score === 4) {
+            strengthBarFill.classList.add('strong');
+            strengthLabel.textContent = 'Kuat';
+            strengthLabel.classList.add('strong');
+          } else if (score === 5) {
+            strengthBarFill.classList.add('excellent');
+            strengthLabel.textContent = 'Sangat Kuat';
+            strengthLabel.classList.add('excellent');
+            
+            // Hide checker and show success message after short delay
+            setTimeout(() => {
+              if (updateStrength.latestScore === 5) {
+                strengthPanel.classList.remove('show');
+                strengthPanel.classList.add('hide-complete');
+                setTimeout(() => {
+                  passwordComplete.classList.add('show');
+                }, 200);
+              }
+            }, 600);
+          }
+
+          // If score drops from 5, show panel again
+          if (previousScore === 5 && score < 5) {
+            passwordComplete.classList.remove('show');
+            setTimeout(() => {
+              strengthPanel.classList.remove('hide-complete');
+              strengthPanel.classList.add('show');
+            }, 100);
+          }
+
+          previousScore = score;
+          updateStrength.latestScore = score;
+          return score;
+        }
+
+        passwordInput.addEventListener('input', updateStrength);
+        passwordInput.addEventListener('focus', function() {
+          const score = updateStrength();
+          if (this.value.length > 0 && score < 5) {
+            strengthPanel.classList.add('show');
+            strengthPanel.classList.remove('hide-complete');
+          }
+        });
+
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+          const score = updateStrength();
+          if (score < 5) {
+            e.preventDefault();
+            alert('Password harus memenuhi semua kriteria:\n- Minimal 8 karakter\n- Huruf kecil (a-z)\n- Huruf besar (A-Z)\n- Angka (0-9)\n- Simbol (!@#$%^&*...)');
+            passwordInput.focus();
+            passwordComplete.classList.remove('show');
+            strengthPanel.classList.remove('hide-complete');
+            strengthPanel.classList.add('show');
+          }
         });
       });
     </script>

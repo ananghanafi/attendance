@@ -253,4 +253,89 @@ class AdminKalenderKerjaController extends Controller
 
         return redirect()->route('admin.kalender')->with('status', 'Data kalender kerja berhasil dihapus.');
     }
+
+    // =====================
+    // KALENDER LIBUR
+    // =====================
+    
+    /**
+     * Tampilkan semua tanggal libur
+     */
+    public function liburIndex()
+    {
+        $this->ensureAdmin();
+
+        $libur = DB::table('kalender_libur')
+            ->orderBy('tanggal', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $libur
+        ]);
+    }
+
+    /**
+     * Simpan tanggal libur (bisa multiple)
+     */
+    public function liburStore(Request $request)
+    {
+        $this->ensureAdmin();
+
+        $request->validate([
+            'tanggal' => 'required|array|min:1',
+            'tanggal.*' => 'required|date',
+        ]);
+
+        $tanggalList = $request->input('tanggal');
+        $inserted = 0;
+        $skipped = 0;
+
+        foreach ($tanggalList as $tgl) {
+            // Cek apakah tanggal sudah ada
+            $exists = DB::table('kalender_libur')
+                ->where('tanggal', $tgl)
+                ->exists();
+
+            if (!$exists) {
+                DB::table('kalender_libur')->insert([
+                    'tanggal' => $tgl,
+                ]);
+                $inserted++;
+            } else {
+                $skipped++;
+            }
+        }
+
+        $message = "Berhasil menambahkan {$inserted} tanggal libur.";
+        if ($skipped > 0) {
+            $message .= " ({$skipped} tanggal sudah ada sebelumnya)";
+        }
+
+        return redirect()->route('admin.kalender')->with('status', $message);
+    }
+
+    /**
+     * Hapus tanggal libur
+     */
+    public function liburDestroy(int $id)
+    {
+        $this->ensureAdmin();
+
+        $deleted = DB::table('kalender_libur')
+            ->where('id', $id)
+            ->delete();
+
+        if ($deleted) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Tanggal libur berhasil dihapus.'
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Tanggal libur tidak ditemukan.'
+        ], 404);
+    }
 }

@@ -30,55 +30,88 @@ class PengajuanWfoController extends Controller
         $bulan = $request->query('bulan', '');
         $tahun = $request->query('tahun', '');
 
+        // Check if any filter is applied
+        $hasFilter = !empty($search) || !empty($minggu) || !empty($bulan) || !empty($tahun);
+
         // Get dropdown data for filters - hanya biro yang is_proyek = false (bukan proyek)
         $biros = DB::table('biro')
             ->where('is_proyek', false)
             ->orderBy('biro_name')
             ->get(['id', 'biro_name']);
 
-        // Query: Show ALL pengajuan (semua biro x semua minggu)
-        // JOIN via kolom kalender yang sama format "minggu-bulan-tahun"
-        $query = DB::table('pengajuan_wao as pw')
-            ->join('biro as b', 'pw.biro_id', '=', 'b.id')
-            ->join('kalender_kerja_v2 as kk', 'pw.kalender', '=', 'kk.kalender') // JOIN langsung via format string
-            ->where('b.is_proyek', false)  // Filter hanya biro non-proyek
-            ->select([
-                'pw.id',
-                'pw.biro_id',
-                'b.biro_name',
-                'pw.kalender',
-                'pw.status',
-                'pw.created_date',
-                'kk.kalender as kalender_string',
-                'kk.periode',
-                'kk.tgl_awal',
-                'kk.tgl_akhir',
-                'kk.persentase_decimal'
-            ]);
+        // Jika TIDAK ada filter: tampilkan max 4 data terbaru per biro
+        // Jika ADA filter: tampilkan semua data sesuai filter
+        if (!$hasFilter) {
+            // Query dengan ROW_NUMBER untuk limit 4 per biro
+            $subQuery = DB::table('pengajuan_wao as pw')
+                ->join('biro as b', 'pw.biro_id', '=', 'b.id')
+                ->join('kalender_kerja_v2 as kk', 'pw.kalender', '=', 'kk.kalender')
+                ->where('b.is_proyek', false)
+                ->selectRaw("
+                    pw.id,
+                    pw.biro_id,
+                    b.biro_name,
+                    pw.kalender,
+                    pw.status,
+                    pw.created_date,
+                    kk.kalender as kalender_string,
+                    kk.periode,
+                    kk.tgl_awal,
+                    kk.tgl_akhir,
+                    kk.persentase_decimal,
+                    ROW_NUMBER() OVER (PARTITION BY pw.biro_id ORDER BY kk.tgl_awal DESC) as row_num
+                ");
 
-        // Apply filters
-        if ($search) {
-            $query->where('b.biro_name', 'ilike', "%{$search}%");
-        }
-        
-        if ($minggu) {
-            $query->where('kk.kalender', 'like', $minggu . '-%');
-        }
-        
-        if ($bulan) {
-            $query->where('kk.kalender', 'like', '%-' . $bulan . '-%');
-        }
-        
-        if ($tahun) {
-            $query->where('kk.kalender', 'like', '%-' . $tahun);
-        }
+            $pengajuans = DB::table(DB::raw("({$subQuery->toSql()}) as sub"))
+                ->mergeBindings($subQuery)
+                ->where('row_num', '<=', 4)
+                ->orderBy('tgl_awal', 'desc')
+                ->orderBy('biro_name')
+                ->paginate(10)
+                ->withQueryString();
+        } else {
+            // Query normal dengan filter - tampilkan semua data
+            $query = DB::table('pengajuan_wao as pw')
+                ->join('biro as b', 'pw.biro_id', '=', 'b.id')
+                ->join('kalender_kerja_v2 as kk', 'pw.kalender', '=', 'kk.kalender')
+                ->where('b.is_proyek', false)
+                ->select([
+                    'pw.id',
+                    'pw.biro_id',
+                    'b.biro_name',
+                    'pw.kalender',
+                    'pw.status',
+                    'pw.created_date',
+                    'kk.kalender as kalender_string',
+                    'kk.periode',
+                    'kk.tgl_awal',
+                    'kk.tgl_akhir',
+                    'kk.persentase_decimal'
+                ]);
 
-        // Pagination - order by kalender desc, then biro name
-        $pengajuans = $query
-            ->orderBy('kk.tgl_awal', 'desc')
-            ->orderBy('b.biro_name')
-            ->paginate(10)
-            ->withQueryString();
+            // Apply filters
+            if ($search) {
+                $query->where('b.biro_name', 'ilike', "%{$search}%");
+            }
+            
+            if ($minggu) {
+                $query->where('kk.kalender', 'like', $minggu . '-%');
+            }
+            
+            if ($bulan) {
+                $query->where('kk.kalender', 'like', '%-' . $bulan . '-%');
+            }
+            
+            if ($tahun) {
+                $query->where('kk.kalender', 'like', '%-' . $tahun);
+            }
+
+            $pengajuans = $query
+                ->orderBy('kk.tgl_awal', 'desc')
+                ->orderBy('b.biro_name')
+                ->paginate(10)
+                ->withQueryString();
+        }
 
         // Enrich data dengan bulan/tahun extracted
         foreach ($pengajuans as $p) {
@@ -211,10 +244,14 @@ class PengajuanWfoController extends Controller
                 });
         }
 
+        // Get tanggal libur dalam periode pengajuan
+        $hariLibur = $this->getHariLiburDalamPeriode($pengajuan->tgl_awal, $pengajuan->tgl_akhir);
+
         return view('admin.pengajuan.show', [
             'pengajuan' => $pengajuan,
             'details' => $details,
             'readOnly' => true, // View mode - radio buttons disabled
+            'hariLibur' => $hariLibur, // Array hari yang libur: ['senin' => true, 'selasa' => false, ...]
         ]);
     }
 
@@ -310,10 +347,14 @@ class PengajuanWfoController extends Controller
                 });
         }
 
+        // Get tanggal libur dalam periode pengajuan
+        $hariLibur = $this->getHariLiburDalamPeriode($pengajuan->tgl_awal, $pengajuan->tgl_akhir);
+
         return view('admin.pengajuan.show', [
             'pengajuan' => $pengajuan,
             'details' => $details,
             'readOnly' => false, // Edit mode - radio buttons enabled
+            'hariLibur' => $hariLibur, // Array hari yang libur: ['senin' => true, 'selasa' => false, ...]
         ]);
     }
 
@@ -449,5 +490,69 @@ class PengajuanWfoController extends Controller
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Get hari yang libur dalam periode pengajuan
+     * 
+     * @param string|null $tglAwal Tanggal awal periode (format: Y-m-d)
+     * @param string|null $tglAkhir Tanggal akhir periode (format: Y-m-d)
+     * @return array Associative array ['senin' => bool, 'selasa' => bool, ...]
+     */
+    private function getHariLiburDalamPeriode(?string $tglAwal, ?string $tglAkhir): array
+    {
+        // Default: tidak ada hari yang libur
+        $hariLibur = [
+            'senin' => false,
+            'selasa' => false,
+            'rabu' => false,
+            'kamis' => false,
+            'jumat' => false,
+        ];
+
+        if (!$tglAwal || !$tglAkhir) {
+            return $hariLibur;
+        }
+
+        // Ambil semua tanggal libur dari database
+        $tanggalLibur = DB::table('kalender_libur')
+            ->pluck('tanggal')
+            ->map(function ($tgl) {
+                return $tgl instanceof \DateTime ? $tgl->format('Y-m-d') : $tgl;
+            })
+            ->toArray();
+
+        if (empty($tanggalLibur)) {
+            return $hariLibur;
+        }
+
+        // Hitung tanggal untuk setiap hari kerja dalam periode
+        // Asumsi: tgl_awal adalah Senin, periode 5 hari kerja (Senin-Jumat)
+        $startDate = new \DateTime($tglAwal);
+        $dayOfWeek = (int) $startDate->format('N'); // 1=Monday, 7=Sunday
+        
+        // Jika start date bukan Senin, cari Senin terdekat
+        if ($dayOfWeek !== 1) {
+            $startDate->modify('last monday');
+        }
+
+        // Map hari ke tanggal
+        $dayNames = ['senin', 'selasa', 'rabu', 'kamis', 'jumat'];
+        $dayDates = [];
+        
+        foreach ($dayNames as $index => $day) {
+            $currentDate = clone $startDate;
+            $currentDate->modify("+{$index} days");
+            $dayDates[$day] = $currentDate->format('Y-m-d');
+        }
+
+        // Cek apakah tanggal tersebut libur
+        foreach ($dayNames as $day) {
+            if (in_array($dayDates[$day], $tanggalLibur)) {
+                $hariLibur[$day] = true;
+            }
+        }
+
+        return $hariLibur;
     }
 }
