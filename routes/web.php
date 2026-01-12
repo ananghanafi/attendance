@@ -16,8 +16,8 @@ Route::get('/', [AuthController::class, 'showLoginForm']);
 // Example API route
 Route::get('/example-api', [IndexController::class, 'example_api']);
 
-// Magic Link Auto-Login (tidak perlu auth middleware)
-Route::get('/magic-login/{token}', [MagicLinkController::class, 'login'])->name('magic.login');
+// Magic Link Auto-Login untuk Pengajuan WFO (tidak perlu auth middleware)
+Route::get('/pengajuan-wfo/{token}', [MagicLinkController::class, 'login'])->name('magic.login');
 
 // Auth (username-based)
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -76,12 +76,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/kalender-kerja', [AdminKalenderKerjaController::class, 'store'])->name('admin.kalender.store');
     Route::match(['get', 'post'], '/kalender-kerja/page', [AdminKalenderKerjaController::class, 'index'])->name('admin.kalender.page');
 
-    // Edit Kalender Kerja
-    Route::get('/kalender-kerja/{id}/edit', [AdminKalenderKerjaController::class, 'edit'])->name('kalender.edit');
-    Route::put('/kalender-kerja/{id}', [AdminKalenderKerjaController::class, 'update'])->name('kalender.update');
+    // Edit Kalender Kerja (ID disimpan di session)
+    Route::post('/kalender-kerja/set-edit', [AdminKalenderKerjaController::class, 'setEdit'])->name('kalender.setEdit');
+    Route::get('/kalender-kerja/edit', [AdminKalenderKerjaController::class, 'edit'])->name('kalender.edit');
+    Route::put('/kalender-kerja/update', [AdminKalenderKerjaController::class, 'update'])->name('kalender.update');
 
-    // Hapus Kalender Kerja
-    Route::delete('/kalender-kerja/{id}', [AdminKalenderKerjaController::class, 'destroy'])->name('kalender.destroy');
+    // Hapus Kalender Kerja (ID disimpan di session, langsung dihapus)
+    Route::post('/kalender-kerja/delete', [AdminKalenderKerjaController::class, 'setDelete'])->name('kalender.setDelete');
 
     // Kalender Libur
     Route::get('/kalender-kerja/libur', [AdminKalenderKerjaController::class, 'liburIndex'])->name('kalender.libur.index');

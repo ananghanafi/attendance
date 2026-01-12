@@ -50,7 +50,7 @@
               <tr>
                 <th>No</th>
                 <th>Jabatan</th>
-                <th>Apakah Proyek?</th>
+                <th>Apakah sedang proyek?</th>
                 <th>Aksi</th>
               </tr>
             </thead>

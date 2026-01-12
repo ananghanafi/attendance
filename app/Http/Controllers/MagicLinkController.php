@@ -11,12 +11,12 @@ use Illuminate\Support\Facades\DB;
 class MagicLinkController extends Controller
 {
     /**
-     * Handle magic link login
-     * Route: GET /magic-login/{token}
+     * Handle link login
+     * Route: GET /pengajuan-wfo/{token}
      */
     public function login(string $token)
     {
-        // Cari token di database
+        // fetch token db
         $magicToken = MagicToken::findByRawToken($token);
 
         // Validasi token
@@ -25,10 +25,16 @@ class MagicLinkController extends Controller
                 ->withErrors(['magic_link' => 'Link tidak valid atau sudah kedaluwarsa.']);
         }
 
-        // Cek apakah token sudah expired
+        // cek token 24 jam
         if ($magicToken->isExpired()) {
             return redirect()->route('login')
                 ->withErrors(['magic_link' => 'Link sudah kedaluwarsa. Silakan hubungi admin untuk link baru.']);
+        }
+
+        // cek token is_used
+        if ($magicToken->is_used) {
+            return redirect()->route('login')
+                ->withErrors(['magic_link' => 'Link sudah digunakan. Pengajuan WFO sudah disimpan sebelumnya.']);
         }
 
         // Ambil user
@@ -41,7 +47,6 @@ class MagicLinkController extends Controller
         // Login user
         Auth::login($user);
 
-        // Regenerate session untuk keamanan
         request()->session()->regenerate();
 
         // Ambil biro_id user untuk redirect ke pengajuan edit yang sesuai
@@ -55,13 +60,16 @@ class MagicLinkController extends Controller
             ->first();
 
         if (!$pengajuan) {
-            // Jika pengajuan tidak ditemukan, redirect ke halaman pengajuan index
+            // pengajuan tidak di temukan, masuk view
             return redirect()->route('pengajuan.index')
                 ->with('warning', 'Data pengajuan WFO untuk periode ini tidak ditemukan.');
         }
 
-        // Set session untuk edit pengajuan (sama seperti setEdit di PengajuanWfoController)
-        session(['pengajuan_id' => $pengajuan->id]);
+        // set token untuk expired setelah digunakan
+        session([
+            'pengajuan_id' => $pengajuan->id,
+            'magic_token_id' => $magicToken->id,
+        ]);
 
         // Redirect ke halaman edit pengajuan WFO
         return redirect()->route('pengajuan.edit')

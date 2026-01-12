@@ -53,7 +53,7 @@
               <input type="text" name="divisi" value="{{ old('divisi', $row->divisi) }}" required>
             </div>
             <div>
-              <label>Apakah Proyek?</label>
+              <label>Apakah sedang proyek?</label>
               <select name="is_proyek" required>
                 <option value="1" {{ old('is_proyek', $row->is_proyek ? '1':'0')==='1' ? 'selected' : '' }}>Ya</option>
                 <option value="0" {{ old('is_proyek', $row->is_proyek ? '1':'0')==='0' ? 'selected' : '' }}>Tidak</option>

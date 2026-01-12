@@ -55,7 +55,7 @@ class AuthController extends Controller
         $role = DB::table('roles')->where('id', $user->role_id)->value('role_name');
         $roleUpper = strtoupper($role ?? '');
         
-        // Cek apakah admin atau VP
+        // admin/vp?
         $isAdminOrVP = in_array($roleUpper, ['ADMIN', 'VP']);
         
         // Ambil nama biro untuk user biasa

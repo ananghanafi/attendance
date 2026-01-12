@@ -47,7 +47,7 @@
           </div>
 
           <div style="margin-bottom:12px">
-            <label>Apakah Proyek?</label>
+            <label>Apakah sedang proyek?</label>
             <select name="is_proyek" required>
               <option value="1" {{ old('is_proyek')==='1' ? 'selected' : '' }}>Ya</option>
               <option value="0" {{ old('is_proyek','0')==='0' ? 'selected' : '' }}>Tidak</option>

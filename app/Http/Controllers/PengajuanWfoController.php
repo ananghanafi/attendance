@@ -597,6 +597,17 @@ class PengajuanWfoController extends Controller
                 ->where('id', $id)
                 ->update(['status' => 'final']);
 
+            // Expired magic token jika ada (setelah save, link tidak bisa dipakai lagi)
+            $magicTokenId = session('magic_token_id');
+            if ($magicTokenId) {
+                DB::table('magic_tokens')
+                    ->where('id', $magicTokenId)
+                    ->update(['is_used' => true]);
+                
+                // Hapus dari session
+                session()->forget('magic_token_id');
+            }
+
             DB::commit();
 
             // Redirect ke view mode (bukan edit mode) setelah simpan

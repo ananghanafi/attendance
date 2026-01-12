@@ -168,13 +168,15 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
                       <td>{{ $r->persentase_decimal ?? $r->persentase }}</td>
                       <td>
                         <div style="display:flex;gap:8px;flex-wrap:wrap">
-                          <a href="{{ route('kalender.edit', ['id' => $r->id]) }}" style="text-decoration:none">
-                            <button type="button" class="btn" style="padding:8px 10px;border-radius:8px;border:1px solid #eef0f6;background:#fff">Edit</button>
-                          </a>
-
-                          <form method="POST" action="{{ route('kalender.destroy', ['id' => $r->id]) }}" onsubmit="return confirm('Yakin hapus data ini?');" style="margin:0">
+                          <form method="POST" action="{{ route('kalender.setEdit') }}" style="margin:0">
                             @csrf
-                            @method('DELETE')
+                            <input type="hidden" name="id" value="{{ $r->id }}">
+                            <button type="submit" class="btn" style="padding:8px 10px;border-radius:8px;border:1px solid #eef0f6;background:#fff">Edit</button>
+                          </form>
+
+                          <form method="POST" action="{{ route('kalender.setDelete') }}" onsubmit="return confirm('Yakin hapus data ini?');" style="margin:0">
+                            @csrf
+                            <input type="hidden" name="id" value="{{ $r->id }}">
                             <button type="submit" class="btn" style="padding:8px 10px;border-radius:8px;border:1px solid #fecdd3;background:#fff1f2;color:#991b1b">Hapus</button>
                           </form>
                         </div>

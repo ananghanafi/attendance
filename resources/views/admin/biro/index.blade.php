@@ -51,7 +51,7 @@
                 <th>No</th>
                 <th>Nama Biro</th>
                 <th>Divisi</th>
-                <th>Apakah Proyek?</th>
+                <th>Apakah sedang proyek?</th>
                 <th>Aksi</th>
               </tr>
             </thead>

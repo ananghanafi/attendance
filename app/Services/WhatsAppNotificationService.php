@@ -52,8 +52,8 @@ class WhatsAppNotificationService
                 $kalenderString
             );
 
-            // Buat magic link
-            $magicLink = url('/magic-login/' . $magicToken->raw_token);
+            // Buat magic link dengan format /pengajuan-wfo/{token}
+            $magicLink = url('/pengajuan-wfo/' . $magicToken->raw_token);
 
             // Ambil nama biro
             $biro = DB::table('biro')

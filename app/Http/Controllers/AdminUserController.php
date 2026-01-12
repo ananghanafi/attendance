@@ -24,7 +24,6 @@ class AdminUserController extends Controller
         $this->ensureAdmin();
 
         return view('admin.users.create', $this->dropdownData() + [
-            // for edit view compatibility
             'row' => null,
         ]);
     }
@@ -47,7 +46,6 @@ class AdminUserController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        // enrich role_name & biro_name for table display
         $roleMap = DB::table('roles')->pluck('role_name', 'id');
         $biroMap = DB::table('biro')->pluck('biro_name', 'id');
 
@@ -91,7 +89,6 @@ class AdminUserController extends Controller
 
         $row = User::query()->findOrFail($id);
 
-        // map current jabatan string -> id for dropdown
         $jabatanId = null;
         if (!empty($row->jabatan)) {
             $jabatanId = DB::table('jabatan')->where('jabatan', $row->jabatan)->value('id');
@@ -107,7 +104,6 @@ class AdminUserController extends Controller
     {
         $this->ensureAdmin();
 
-        // Get ID from session
         $id = $request->session()->get('editing_user_id');
         
         if (!$id) {
@@ -138,16 +134,13 @@ class AdminUserController extends Controller
             'username.unique' => 'Username sudah digunakan.',
         ]);
 
-        // jabatan_id -> users.jabatan (string)
         $validated['jabatan'] = DB::table('jabatan')->where('id', $validated['jabatan_id'])->value('jabatan');
         unset($validated['jabatan_id']);
 
-        // Normalize phone number to 628xxx format
         if (!empty($validated['telp'])) {
             $validated['telp'] = $this->normalizePhoneNumber($validated['telp']);
         }
 
-        // If password empty on edit: don't change it
         if (empty($validated['password'])) {
             unset($validated['password']);
         }
@@ -180,28 +173,30 @@ class AdminUserController extends Controller
 
     /**
      * Normalize phone number to 628xxx format
-     * 08xxx -> 628xxx
-     * 628xxx -> 628xxx (no change)
-     * +628xxx -> 628xxx
+     * Handles: +62 838-2457-3711, +6283824573711, 0838-2457-3711, 083824573711, 83824573711
+     * All converted to: 6283824573711
      */
     private function normalizePhoneNumber(string $phone): string
     {
-        // Remove spaces, dashes, and other non-numeric characters except +
-        $phone = preg_replace('/[^\d+]/', '', $phone);
+        // Remove all non-numeric characters (spaces, dashes, parentheses, +, etc.)
+        $phone = preg_replace('/[^\d]/', '', $phone);
         
-        // Remove leading + if exists
-        $phone = ltrim($phone, '+');
-        
-        // If starts with 08, replace with 628
-        if (preg_match('/^08/', $phone)) {
-            $phone = '628' . substr($phone, 2);
+        // If starts with 62, keep as is
+        if (str_starts_with($phone, '62')) {
+            return $phone;
         }
         
-        // If starts with 8 (without 0), add 62
-        if (preg_match('/^8/', $phone)) {
-            $phone = '62' . $phone;
+        // If starts with 08, replace 0 with 62
+        if (str_starts_with($phone, '08')) {
+            return '62' . substr($phone, 1);
         }
         
+        // If starts with 8 (user typed without 0 or 62), add 62
+        if (str_starts_with($phone, '8')) {
+            return '62' . $phone;
+        }
+        
+        // For other formats, return as is
         return $phone;
     }
 

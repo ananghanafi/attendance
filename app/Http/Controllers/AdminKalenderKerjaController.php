@@ -15,7 +15,7 @@ class AdminKalenderKerjaController extends Controller
     {
         $user = Auth::user();
         $role = DB::table('roles')->where('id', $user->role_id)->value('role_name');
-        // Accept ADMIN and VP roles
+        // ADMIN VP roles
         if (!in_array(strtoupper($role ?? ''), ['ADMIN', 'VP'])) {
             abort(403);
         }
@@ -25,11 +25,10 @@ class AdminKalenderKerjaController extends Controller
     {
         $this->ensureAdmin();
 
-        // Session-based pagination: simpan page ke session, ambil dari request jika ada
         $page = $request->input('p', session('kalender_page', 1));
         session(['kalender_page' => $page]);
 
-        // Sort by tgl_awal descending (terbaru di atas)
+        // Sort by tgl_awal descending 
         $rows = KalenderKerjaV2::query()
             ->orderByDesc('tgl_awal')
             ->paginate(10, ['*'], 'p', $page);
@@ -42,7 +41,6 @@ class AdminKalenderKerjaController extends Controller
             ->orderBy('tanggal', 'desc')
             ->paginate(10, ['*'], 'lp', $liburPage);
 
-        // Simpan tab aktif
         $activeTab = $request->input('tab', session('kalender_active_tab', 'form'));
         session(['kalender_active_tab' => $activeTab]);
 
@@ -65,6 +63,26 @@ class AdminKalenderKerjaController extends Controller
             'tgl_awal' => ['required','date'],
             'tgl_akhir' => ['required','date','after_or_equal:tgl_awal'],
         ], [
+            'minggu.required' => 'Minggu harus diisi.',
+            'minggu.integer' => 'Minggu harus berupa angka.',
+            'minggu.min' => 'Minggu minimal 1.',
+            'minggu.max' => 'Minggu maksimal 6.',
+            'wfo_maks.required' => 'Persentase WFO Maksimal harus diisi.',
+            'wfo_maks.numeric' => 'Persentase WFO Maksimal harus berupa angka.',
+            'wfo_maks.min' => 'Persentase WFO Maksimal minimal 0.',
+            'wfo_maks.max' => 'Persentase WFO Maksimal maksimal 100.',
+            'bulan.required' => 'Bulan harus diisi.',
+            'bulan.integer' => 'Bulan harus berupa angka.',
+            'bulan.min' => 'Bulan minimal 1.',
+            'bulan.max' => 'Bulan maksimal 12.',
+            'tahun.required' => 'Tahun harus diisi.',
+            'tahun.integer' => 'Tahun harus berupa angka.',
+            'tahun.min' => 'Tahun minimal 2000.',
+            'tahun.max' => 'Tahun maksimal 2100.',
+            'tgl_awal.required' => 'Tanggal awal harus diisi. Silakan pilih tanggal di kalender.',
+            'tgl_awal.date' => 'Tanggal awal harus berupa tanggal yang valid.',
+            'tgl_akhir.required' => 'Tanggal akhir harus diisi. Silakan pilih tanggal di kalender.',
+            'tgl_akhir.date' => 'Tanggal akhir harus berupa tanggal yang valid.',
             'tgl_akhir.after_or_equal' => 'Tanggal akhir harus lebih besar atau sama dengan tanggal awal.',
         ]);
 
@@ -72,7 +90,7 @@ class AdminKalenderKerjaController extends Controller
 
         $judulText = sprintf('Minggu ke-%d, %02d/%d', $data['minggu'], $data['bulan'], $data['tahun']);
 
-        // block tanggal duplikat, based minggu+bulan+tahun
+        // block data duplikat
         $exists = KalenderKerjaV2::query()->where('kalender', $kalenderDb)->exists();
         if ($exists) {
             return back()
@@ -90,39 +108,34 @@ class AdminKalenderKerjaController extends Controller
             'judul' => $judulText,
             'active' => false,
         ]);
-
-        // Get the created kalender ID
+        // get id kalender
         $kalenderId = DB::table('kalender_kerja_v2')
             ->where('kalender', $kalenderDb)
             ->value('id');
-
-        // Auto-create pengajuan WFO untuk semua biro (is_proyek = false)
+        // pengajuan wao biro (is_proyek = false)
         $biros = DB::table('biro')
             ->where('is_proyek', false)
             ->get(['id', 'biro_name']);
 
         foreach ($biros as $biro) {
-            // Check if pengajuan already exists untuk biro + kalender ini
             $exists = DB::table('pengajuan_wao')
                 ->where('biro_id', $biro->id)
-                ->where('kalender', $kalenderDb) // Simpan format "minggu-bulan-tahun"
+                ->where('kalender', $kalenderDb)
                 ->exists();
-
             if (!$exists) {
                 // Create pengajuan WFO
                 $pengajuanId = DB::table('pengajuan_wao')->insertGetId([
                     'biro_id' => $biro->id,
-                    'kalender' => $kalenderDb, // Simpan format "minggu-bulan-tahun"
-                    'status' => 'draft', // draft = belum diedit (Open), final = sudah diedit (Close)
+                    'kalender' => $kalenderDb,
+                    'status' => 'draft', // open = belum edit, close = final
                     'created_date' => now(),
                 ]);
 
-                // Get all users from this biro
+                // fetch data biro
                 $users = DB::table('users')
                     ->where('biro_id', $biro->id)
                     ->get(['nip']);
 
-                // Create detail records for each user (default: all WFA = false means WFO)
                 foreach ($users as $user) {
                     DB::table('pengajuan_wao_detail')->insert([
                         'pengajuan_id' => $pengajuanId,
@@ -137,7 +150,7 @@ class AdminKalenderKerjaController extends Controller
             }
         }
 
-        // Auto-delete old pengajuan: hapus pengajuan minggu 1 bulan lama saat input minggu 1 bulan baru
+        // hapus data minggu paling lama (max 4 data di view)
         if ($data['minggu'] == 1) {
             // Get previous month's week 1 kalender
             $prevMonth = $data['bulan'] - 1;
@@ -149,7 +162,7 @@ class AdminKalenderKerjaController extends Controller
             
             $oldKalender = sprintf('1-%d-%d', $prevMonth, $prevYear);
             
-            // Delete pengajuan details first (berdasarkan kalender format "minggu-bulan-tahun")
+            // Delete pengajuan detail
             DB::table('pengajuan_wao_detail')
                 ->whereIn('pengajuan_id', function($query) use ($oldKalender) {
                     $query->select('id')
@@ -187,31 +200,48 @@ class AdminKalenderKerjaController extends Controller
                 ]);
             }
         } catch (\Throwable $e) {
-            // Log error tapi jangan gagalkan proses utama
             Log::error('Failed to send WhatsApp notification', [
                 'error' => $e->getMessage(),
                 'kalender' => $kalenderDb,
             ]);
         }
-
-        // Stay di tab "data" setelah store
         session(['kalender_active_tab' => 'data']);
 
         return redirect()->route('admin.kalender')->with('status', 'Data kalender kerja berhasil disimpan.');
     }
 
-    public function edit(int $id)
+    /**
+     * Set session untuk edit kalender kerja
+     */
+    public function setEdit(Request $request)
     {
         $this->ensureAdmin();
+        session(['kalender_edit_id' => $request->input('id')]);
+        return redirect()->route('kalender.edit');
+    }
+
+    public function edit()
+    {
+        $this->ensureAdmin();
+
+        $id = session('kalender_edit_id');
+        if (!$id) {
+            return redirect()->route('admin.kalender')->with('error', 'Silakan pilih kalender dari daftar');
+        }
 
         $row = KalenderKerjaV2::query()->findOrFail($id);
 
         return view('admin.kalender.edit', ['row' => $row]);
     }
 
-    public function update(Request $request, int $id)
+    public function update(Request $request)
     {
         $this->ensureAdmin();
+
+        $id = session('kalender_edit_id');
+        if (!$id) {
+            return redirect()->route('admin.kalender')->with('error', 'Silakan pilih kalender dari daftar');
+        }
 
         $row = KalenderKerjaV2::query()->findOrFail($id);
 
@@ -223,6 +253,26 @@ class AdminKalenderKerjaController extends Controller
             'tgl_awal' => ['required','date'],
             'tgl_akhir' => ['required','date','after_or_equal:tgl_awal'],
         ], [
+            'minggu.required' => 'Minggu harus diisi.',
+            'minggu.integer' => 'Minggu harus berupa angka.',
+            'minggu.min' => 'Minggu minimal 1.',
+            'minggu.max' => 'Minggu maksimal 6.',
+            'wfo_maks.required' => 'Persentase WFO Maksimal harus diisi.',
+            'wfo_maks.numeric' => 'Persentase WFO Maksimal harus berupa angka.',
+            'wfo_maks.min' => 'Persentase WFO Maksimal minimal 0.',
+            'wfo_maks.max' => 'Persentase WFO Maksimal maksimal 100.',
+            'bulan.required' => 'Bulan harus diisi.',
+            'bulan.integer' => 'Bulan harus berupa angka.',
+            'bulan.min' => 'Bulan minimal 1.',
+            'bulan.max' => 'Bulan maksimal 12.',
+            'tahun.required' => 'Tahun harus diisi.',
+            'tahun.integer' => 'Tahun harus berupa angka.',
+            'tahun.min' => 'Tahun minimal 2000.',
+            'tahun.max' => 'Tahun maksimal 2100.',
+            'tgl_awal.required' => 'Tanggal awal harus diisi.',
+            'tgl_awal.date' => 'Tanggal awal harus berupa tanggal yang valid.',
+            'tgl_akhir.required' => 'Tanggal akhir harus diisi.',
+            'tgl_akhir.date' => 'Tanggal akhir harus berupa tanggal yang valid.',
             'tgl_akhir.after_or_equal' => 'Tanggal akhir harus lebih besar atau sama dengan tanggal awal.',
         ]);
 
@@ -230,7 +280,7 @@ class AdminKalenderKerjaController extends Controller
 
         $judulText = sprintf('Minggu ke-%d, %02d/%d', $data['minggu'], $data['bulan'], $data['tahun']);
 
-        // block duplikat tanggal
+        // block duplikat data
         $exists = KalenderKerjaV2::query()
             ->where('kalender', $kalenderDb)
             ->where('id', '!=', $row->id)
@@ -245,30 +295,48 @@ class AdminKalenderKerjaController extends Controller
             'periode' => sprintf('Minggu %d', $data['minggu']),
             'tgl_awal' => $data['tgl_awal'],
             'tgl_akhir' => $data['tgl_akhir'],
-            // simpan dalam satuan persen (contoh: input 50 => simpan 50, bukan 0.5)
             'persentase_decimal' => (float) $data['wfo_maks'],
             'persentase' => (float) $data['wfo_maks'],
             'kalender' => $kalenderDb,
             'judul' => $judulText,
         ]);
-
-        // Stay di tab "data" setelah update
         session(['kalender_active_tab' => 'data']);
 
         return redirect()->route('admin.kalender')->with('status', 'Data kalender kerja berhasil diperbarui.');
     }
 
-    public function destroy(int $id)
+    /**
+     * Set session untuk delete kalender kerja dan langsung hapus
+     */
+    public function setDelete(Request $request)
     {
         $this->ensureAdmin();
+        
+        $id = $request->input('id');
+        if (!$id) {
+            return redirect()->route('admin.kalender')->with('error', 'Silakan pilih kalender dari daftar');
+        }
+        
+        session(['kalender_delete_id' => $id]);
+        
+        // Langsung panggil destroy
+        return $this->destroy();
+    }
+
+    public function destroy()
+    {
+        $this->ensureAdmin();
+
+        $id = session('kalender_delete_id');
+        if (!$id) {
+            return redirect()->route('admin.kalender')->with('error', 'Silakan pilih kalender dari daftar');
+        }
 
         $row = KalenderKerjaV2::query()->findOrFail($id);
         
         // Get kalender string untuk delete pengajuan
-        $kalenderString = $row->kalender; // format "minggu-bulan-tahun"
+        $kalenderString = $row->kalender;
         
-        // Cascade delete: hapus pengajuan WFO yang terkait dengan kalender ini
-        // 1. Hapus detail tanggal dulu
         DB::table('pengajuan_wao_detail_tanggal')
             ->whereIn('pengajuan_id', function($query) use ($kalenderString) {
                 $query->select('id')
@@ -277,7 +345,6 @@ class AdminKalenderKerjaController extends Controller
             })
             ->delete();
         
-        // 2. Hapus detail dulu
         DB::table('pengajuan_wao_detail')
             ->whereIn('pengajuan_id', function($query) use ($kalenderString) {
                 $query->select('id')
@@ -286,15 +353,14 @@ class AdminKalenderKerjaController extends Controller
             })
             ->delete();
         
-        // 3. Hapus master pengajuan
         DB::table('pengajuan_wao')
             ->where('kalender', $kalenderString)
             ->delete();
         
-        // 4. Hapus kalender
         $row->delete();
 
-        // Stay di tab "data" setelah delete
+        session()->forget('kalender_delete_id');
+
         session(['kalender_active_tab' => 'data']);
 
         return redirect()->route('admin.kalender')->with('status', 'Data kalender kerja berhasil dihapus.');
@@ -304,9 +370,6 @@ class AdminKalenderKerjaController extends Controller
     // KALENDER LIBUR
     // =====================
     
-    /**
-     * Tampilkan semua tanggal libur
-     */
     public function liburIndex()
     {
         $this->ensureAdmin();
@@ -322,7 +385,7 @@ class AdminKalenderKerjaController extends Controller
     }
 
     /**
-     * Simpan tanggal libur (bisa multiple)
+     * Simpan tanggal libur (multiple)
      */
     public function liburStore(Request $request)
     {
@@ -331,6 +394,12 @@ class AdminKalenderKerjaController extends Controller
         $request->validate([
             'tanggal' => 'required|array|min:1',
             'tanggal.*' => 'required|date',
+        ], [
+            'tanggal.required' => 'Tanggal libur harus diisi.',
+            'tanggal.array' => 'Format tanggal tidak valid.',
+            'tanggal.min' => 'Pilih minimal 1 tanggal libur.',
+            'tanggal.*.required' => 'Tanggal libur harus diisi.',
+            'tanggal.*.date' => 'Tanggal libur harus berupa tanggal yang valid.',
         ]);
 
         $tanggalList = $request->input('tanggal');
