@@ -84,6 +84,9 @@ Route::middleware('auth')->group(function () {
     // Hapus Kalender Kerja (ID disimpan di session, langsung dihapus)
     Route::post('/kalender-kerja/delete', [AdminKalenderKerjaController::class, 'setDelete'])->name('kalender.setDelete');
 
+    // Broadcast ulang ke semua biro untuk kalender tertentu
+    Route::post('/kalender-kerja/broadcast', [AdminKalenderKerjaController::class, 'broadcast'])->name('kalender.broadcast');
+
     // Kalender Libur
     Route::get('/kalender-kerja/libur', [AdminKalenderKerjaController::class, 'liburIndex'])->name('kalender.libur.index');
     Route::post('/kalender-kerja/libur', [AdminKalenderKerjaController::class, 'liburStore'])->name('kalender.libur.store');
@@ -96,4 +99,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/pengajuan/set-edit', [PengajuanWfoController::class, 'setEdit'])->name('pengajuan.setEdit');
     Route::get('/pengajuan/edit', [PengajuanWfoController::class, 'edit'])->name('pengajuan.edit');
     Route::put('/pengajuan/update', [PengajuanWfoController::class, 'update'])->name('pengajuan.update');
+    
+    // Broadcast ulang ke biro tertentu
+    Route::post('/pengajuan/broadcast', [PengajuanWfoController::class, 'broadcast'])->name('pengajuan.broadcast');
+    
+    // Broadcast ulang ke multiple biro
+    Route::post('/pengajuan/broadcast-multiple', [PengajuanWfoController::class, 'broadcastMultiple'])->name('pengajuan.broadcastMultiple');
 });

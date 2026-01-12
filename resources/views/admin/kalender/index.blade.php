@@ -78,8 +78,16 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
                 </select>
               </div>
               <div>
-                <label for="wfo_maks">WFO Maksimal (%)</label>
-                <input type="number" id="wfo_maks" name="wfo_maks" min="0" max="100" step="0.01" required placeholder="Contoh: 50">
+                <label for="tipe_persentase">Tipe Persentase</label>
+                <select id="tipe_persentase" name="tipe_persentase" required>
+                  <option value="wfo">WFO (Work From Office)</option>
+                  <option value="wfa">WFA (Work From Anywhere)</option>
+                </select>
+              </div>
+              <div>
+                <label for="nilai_persentase"><span id="label_persentase">WFO</span> Maksimal (%)</label>
+                <input type="number" id="nilai_persentase" name="nilai_persentase" min="0" max="100" step="0.01" required placeholder="Contoh: 50">
+                <div id="info_persentase" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
               </div>
               <div>
                 <label for="bulan">Bulan</label>
@@ -154,7 +162,8 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
                     <th>Kalender</th>
                     <th>Tanggal Awal</th>
                     <th>Tanggal Akhir</th>
-                    <th>WFO Maks (%)</th>
+                    <th>WFO (%)</th>
+                    <th>WFA (%)</th>
                     <th>Aksi</th>
                   </tr>
                 </thead>
@@ -165,13 +174,20 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
                       <td>{{ $r->judul }}</td>
                       <td>{{ $r->tgl_awal ? $r->tgl_awal->format('Y-m-d') : '' }}</td>
                       <td>{{ $r->tgl_akhir ? $r->tgl_akhir->format('Y-m-d') : '' }}</td>
-                      <td>{{ $r->persentase_decimal ?? $r->persentase }}</td>
+                      <td>{{ $r->persentase !== null ? $r->persentase . '%' : '-' }}</td>
+                      <td>{{ $r->persentase_wfa !== null ? $r->persentase_wfa . '%' : '-' }}</td>
                       <td>
                         <div style="display:flex;gap:8px;flex-wrap:wrap">
                           <form method="POST" action="{{ route('kalender.setEdit') }}" style="margin:0">
                             @csrf
                             <input type="hidden" name="id" value="{{ $r->id }}">
                             <button type="submit" class="btn" style="padding:8px 10px;border-radius:8px;border:1px solid #eef0f6;background:#fff">Edit</button>
+                          </form>
+
+                          <form method="POST" action="{{ route('kalender.broadcast') }}" onsubmit="return confirm('Kirim notifikasi ke semua biro?');" style="margin:0">
+                            @csrf
+                            <input type="hidden" name="id" value="{{ $r->id }}">
+                            <button type="submit" class="btn" style="padding:8px 10px;border-radius:8px;border:1px solid #c7d2fe;background:#eef2ff;color:#4338ca" title="Broadcast ke semua biro">📢 Broadcast</button>
                           </form>
 
                           <form method="POST" action="{{ route('kalender.setDelete') }}" onsubmit="return confirm('Yakin hapus data ini?');" style="margin:0">
@@ -184,7 +200,7 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
                     </tr>
                   @empty
                     <tr id="emptyRow">
-                      <td colspan="6" style="color:var(--muted)">Belum ada data.</td>
+                      <td colspan="7" style="color:var(--muted)">Belum ada data.</td>
                     </tr>
                   @endforelse
                 </tbody>
@@ -464,6 +480,25 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
         });
         tahunEl.value = String(y);
       }
+
+  // --- Persentase WFO/WFA ---
+  const tipePersentase = document.getElementById('tipe_persentase');
+  const nilaiPersentase = document.getElementById('nilai_persentase');
+  const labelPersentase = document.getElementById('label_persentase');
+  const infoPersentase = document.getElementById('info_persentase');
+
+  function updatePersentaseInfo() {
+    const tipe = tipePersentase.value;
+    if (tipe === 'wfo') {
+      labelPersentase.textContent = 'WFO';
+    } else {
+      labelPersentase.textContent = 'WFA';
+    }
+  }
+
+  tipePersentase.addEventListener('change', updatePersentaseInfo);
+  nilaiPersentase.addEventListener('input', updatePersentaseInfo);
+  updatePersentaseInfo();
 
   // --- Kalender (grid bulanan) ---
       const cal = document.getElementById('calendar');

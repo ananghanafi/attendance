@@ -27,6 +27,7 @@ class KalenderKerjaV2 extends Model
         'poin_4',
         'poin_5',
         'judul',
+        'persentase_wfa',
     ];
 
     protected $casts = [
@@ -35,5 +36,6 @@ class KalenderKerjaV2 extends Model
         'active' => 'boolean',
         'persentase' => 'float',
         'persentase_decimal' => 'float',
+        'persentase_wfa' => 'float',
     ];
 }

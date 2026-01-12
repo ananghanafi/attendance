@@ -28,6 +28,7 @@ return new class extends Migration
             $table->float('persentase')->nullable();
             $table->boolean('active')->nullable()->default(false);
             $table->float('persentase_decimal')->nullable();
+            $table->float('persentase_wfa')->nullable();
 
             $table->text('poin_1')->nullable();
             $table->text('poin_2')->nullable();

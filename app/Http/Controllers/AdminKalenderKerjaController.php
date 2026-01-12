@@ -57,7 +57,8 @@ class AdminKalenderKerjaController extends Controller
 
         $data = $request->validate([
             'minggu' => ['required','integer','min:1','max:6'],
-            'wfo_maks' => ['required','numeric','min:0','max:100'],
+            'tipe_persentase' => ['required','in:wfo,wfa'],
+            'nilai_persentase' => ['required','numeric','min:0','max:100'],
             'bulan' => ['required','integer','min:1','max:12'],
             'tahun' => ['required','integer','min:2000','max:2100'],
             'tgl_awal' => ['required','date'],
@@ -67,10 +68,12 @@ class AdminKalenderKerjaController extends Controller
             'minggu.integer' => 'Minggu harus berupa angka.',
             'minggu.min' => 'Minggu minimal 1.',
             'minggu.max' => 'Minggu maksimal 6.',
-            'wfo_maks.required' => 'Persentase WFO Maksimal harus diisi.',
-            'wfo_maks.numeric' => 'Persentase WFO Maksimal harus berupa angka.',
-            'wfo_maks.min' => 'Persentase WFO Maksimal minimal 0.',
-            'wfo_maks.max' => 'Persentase WFO Maksimal maksimal 100.',
+            'tipe_persentase.required' => 'Pilih tipe persentase (WFO atau WFA).',
+            'tipe_persentase.in' => 'Tipe persentase harus WFO atau WFA.',
+            'nilai_persentase.required' => 'Nilai persentase harus diisi.',
+            'nilai_persentase.numeric' => 'Nilai persentase harus berupa angka.',
+            'nilai_persentase.min' => 'Nilai persentase minimal 0.',
+            'nilai_persentase.max' => 'Nilai persentase maksimal 100.',
             'bulan.required' => 'Bulan harus diisi.',
             'bulan.integer' => 'Bulan harus berupa angka.',
             'bulan.min' => 'Bulan minimal 1.',
@@ -85,6 +88,15 @@ class AdminKalenderKerjaController extends Controller
             'tgl_akhir.date' => 'Tanggal akhir harus berupa tanggal yang valid.',
             'tgl_akhir.after_or_equal' => 'Tanggal akhir harus lebih besar atau sama dengan tanggal awal.',
         ]);
+
+        // Simpan WFO atau WFA, yang lain null (persentase_decimal selalu null)
+        if ($data['tipe_persentase'] === 'wfo') {
+            $wfo = (float) $data['nilai_persentase'];
+            $wfa = null;
+        } else {
+            $wfo = null;
+            $wfa = (float) $data['nilai_persentase'];
+        }
 
         $kalenderDb = sprintf('%d-%d-%d', $data['minggu'], $data['bulan'], $data['tahun']);
 
@@ -102,8 +114,9 @@ class AdminKalenderKerjaController extends Controller
             'periode' => sprintf('Minggu %d', $data['minggu']),
             'tgl_awal' => $data['tgl_awal'],
             'tgl_akhir' => $data['tgl_akhir'],
-            'persentase_decimal' => (float) $data['wfo_maks'],
-            'persentase' => (float) $data['wfo_maks'],
+            'persentase_decimal' => null,
+            'persentase' => $wfo,
+            'persentase_wfa' => $wfa,
             'kalender' => $kalenderDb,
             'judul' => $judulText,
             'active' => false,
@@ -247,7 +260,8 @@ class AdminKalenderKerjaController extends Controller
 
         $data = $request->validate([
             'minggu' => ['required','integer','min:1','max:6'],
-            'wfo_maks' => ['required','numeric','min:0','max:100'],
+            'tipe_persentase' => ['required','in:wfo,wfa'],
+            'nilai_persentase' => ['required','numeric','min:0','max:100'],
             'bulan' => ['required','integer','min:1','max:12'],
             'tahun' => ['required','integer','min:2000','max:2100'],
             'tgl_awal' => ['required','date'],
@@ -257,10 +271,12 @@ class AdminKalenderKerjaController extends Controller
             'minggu.integer' => 'Minggu harus berupa angka.',
             'minggu.min' => 'Minggu minimal 1.',
             'minggu.max' => 'Minggu maksimal 6.',
-            'wfo_maks.required' => 'Persentase WFO Maksimal harus diisi.',
-            'wfo_maks.numeric' => 'Persentase WFO Maksimal harus berupa angka.',
-            'wfo_maks.min' => 'Persentase WFO Maksimal minimal 0.',
-            'wfo_maks.max' => 'Persentase WFO Maksimal maksimal 100.',
+            'tipe_persentase.required' => 'Pilih tipe persentase (WFO atau WFA).',
+            'tipe_persentase.in' => 'Tipe persentase harus WFO atau WFA.',
+            'nilai_persentase.required' => 'Nilai persentase harus diisi.',
+            'nilai_persentase.numeric' => 'Nilai persentase harus berupa angka.',
+            'nilai_persentase.min' => 'Nilai persentase minimal 0.',
+            'nilai_persentase.max' => 'Nilai persentase maksimal 100.',
             'bulan.required' => 'Bulan harus diisi.',
             'bulan.integer' => 'Bulan harus berupa angka.',
             'bulan.min' => 'Bulan minimal 1.',
@@ -275,6 +291,15 @@ class AdminKalenderKerjaController extends Controller
             'tgl_akhir.date' => 'Tanggal akhir harus berupa tanggal yang valid.',
             'tgl_akhir.after_or_equal' => 'Tanggal akhir harus lebih besar atau sama dengan tanggal awal.',
         ]);
+
+        // Simpan WFO atau WFA, yang lain null
+        if ($data['tipe_persentase'] === 'wfo') {
+            $wfo = (float) $data['nilai_persentase'];
+            $wfa = null;
+        } else {
+            $wfa = (float) $data['nilai_persentase'];
+            $wfo = null;
+        }
 
         $kalenderDb = sprintf('%d-%d-%d', $data['minggu'], $data['bulan'], $data['tahun']);
 
@@ -295,8 +320,9 @@ class AdminKalenderKerjaController extends Controller
             'periode' => sprintf('Minggu %d', $data['minggu']),
             'tgl_awal' => $data['tgl_awal'],
             'tgl_akhir' => $data['tgl_akhir'],
-            'persentase_decimal' => (float) $data['wfo_maks'],
-            'persentase' => (float) $data['wfo_maks'],
+            'persentase_decimal' => null,
+            'persentase' => $wfo,
+            'persentase_wfa' => $wfa,
             'kalender' => $kalenderDb,
             'judul' => $judulText,
         ]);
@@ -455,5 +481,53 @@ class AdminKalenderKerjaController extends Controller
             'success' => false,
             'message' => 'Tanggal libur tidak ditemukan.'
         ], 404);
+    }
+
+    /**
+     * Broadcast ulang notifikasi WhatsApp ke semua biro untuk kalender tertentu
+     */
+    public function broadcast(Request $request)
+    {
+        $this->ensureAdmin();
+
+        $id = $request->input('id');
+        if (!$id) {
+            return redirect()->route('admin.kalender')->with('error', 'Kalender tidak ditemukan');
+        }
+
+        $kalender = KalenderKerjaV2::find($id);
+        if (!$kalender) {
+            return redirect()->route('admin.kalender')->with('error', 'Kalender tidak ditemukan');
+        }
+
+        // Get all pengajuan for this kalender
+        $pengajuans = DB::table('pengajuan_wao')
+            ->where('kalender', $kalender->kalender)
+            ->get();
+
+        if ($pengajuans->isEmpty()) {
+            return redirect()->route('admin.kalender')->with('error', 'Tidak ada pengajuan untuk kalender ini');
+        }
+
+        $waService = new WhatsAppNotificationService();
+        $successCount = 0;
+        $failCount = 0;
+
+        foreach ($pengajuans as $pengajuan) {
+            try {
+                $result = $waService->sendNotificationForPengajuan($pengajuan->id);
+                if ($result) {
+                    $successCount++;
+                } else {
+                    $failCount++;
+                }
+            } catch (\Exception $e) {
+                Log::error('Broadcast error: ' . $e->getMessage());
+                $failCount++;
+            }
+        }
+
+        session(['kalender_active_tab' => 'data']);
+        return redirect()->route('admin.kalender')->with('status', 'Broadcast berhasil dikirim');
     }
 }

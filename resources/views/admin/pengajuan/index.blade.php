@@ -197,17 +197,34 @@ tr:hover{background:#f9fafb}
 
 <!-- Card Table -->
 <div class="card">
+  <!-- Broadcast Multiple Button -->
+  <form id="broadcastForm" action="{{ route('pengajuan.broadcastMultiple') }}" method="POST" style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    @csrf
+    <div id="hiddenIdsContainer"></div>
+    <button type="submit" class="btn" style="padding:10px 16px;border:1px solid #c7d2fe;background:#eef2ff;color:#4338ca" onclick="return confirmBroadcast()">
+      📢 Broadcast Terpilih
+    </button>
+    <span id="selectedCount" style="font-size:13px;color:var(--text-muted)">0 biro dipilih</span>
+    <button type="button" class="btn secondary" style="padding:8px 12px;font-size:12px" onclick="clearSelection()">
+      ✕ Hapus Pilihan
+    </button>
+  </form>
+
   <div class="tableScroll">
     <table>
       <thead>
         <tr>
+          <th style="width:40px;text-align:center">
+            <input type="checkbox" id="selectAll" title="Pilih Semua" style="cursor:pointer">
+          </th>
           <th>Biro</th>
           <th>Bulan</th>
           <th>Tahun</th>
           <th>Minggu</th>
           <th>Tanggal Mulai</th>
           <th>Tanggal Selesai</th>
-          <th>%</th>
+          <th>WFO (%)</th>
+          <th>WFA (%)</th>
           <th style="text-align:center">Pembuatan<br>Schedule</th>
           <th style="text-align:center">Action</th>
         </tr>
@@ -215,6 +232,11 @@ tr:hover{background:#f9fafb}
       <tbody>
         @forelse($pengajuans as $p)
           <tr class="pengajuan-row">
+            <td style="text-align:center">
+              @if($p->canEdit)
+              <input type="checkbox" name="ids[]" value="{{ $p->id }}" class="broadcast-checkbox" form="broadcastForm" data-biro="{{ $p->biro_name }}" style="cursor:pointer">
+              @endif
+            </td>
             <td>{{ $p->biro_name }}</td>
             <td>
               @php
@@ -226,7 +248,8 @@ tr:hover{background:#f9fafb}
             <td>{{ $p->minggu ?? '-' }}</td>
             <td>{{ $p->tgl_awal ? \Carbon\Carbon::parse($p->tgl_awal)->format('d-M-Y') : '-' }}</td>
             <td>{{ $p->tgl_akhir ? \Carbon\Carbon::parse($p->tgl_akhir)->format('d-M-Y') : '-' }}</td>
-            <td>{{ ($p->persentase_decimal ?? 0) . '%' }}</td>
+            <td>{{ $p->persentase !== null ? $p->persentase . '%' : '-' }}</td>
+            <td>{{ $p->persentase_wfa !== null ? $p->persentase_wfa . '%' : '-' }}</td>
             <td style="text-align:center">
               @if(strtolower($p->status ?? '') == 'final')
                 <span class="badge success">Close</span>
@@ -235,23 +258,25 @@ tr:hover{background:#f9fafb}
               @endif
             </td>
             <td style="text-align:center">
-              <form action="{{ route('pengajuan.setView') }}" method="POST" style="display:inline">
-                @csrf
-                <input type="hidden" name="id" value="{{ $p->id }}">
-                <button type="submit" class="btn secondary" style="padding:8px 16px">View</button>
-              </form>
-              @if($p->canEdit)
-              <form action="{{ route('pengajuan.setEdit') }}" method="POST" style="display:inline">
-                @csrf
-                <input type="hidden" name="id" value="{{ $p->id }}">
-                <button type="submit" class="btn primary" style="padding:8px 16px">Edit</button>
-              </form>
-              @endif
+              <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+                <form action="{{ route('pengajuan.setView') }}" method="POST" style="display:inline">
+                  @csrf
+                  <input type="hidden" name="id" value="{{ $p->id }}">
+                  <button type="submit" class="btn secondary" style="padding:8px 16px">View</button>
+                </form>
+                @if($p->canEdit)
+                <form action="{{ route('pengajuan.setEdit') }}" method="POST" style="display:inline">
+                  @csrf
+                  <input type="hidden" name="id" value="{{ $p->id }}">
+                  <button type="submit" class="btn primary" style="padding:8px 16px">Edit</button>
+                </form>
+                @endif
+              </div>
             </td>
           </tr>
         @empty
           <tr id="emptyRow">
-            <td colspan="9" class="empty">
+            <td colspan="11" class="empty">
               @if(!empty($filters['search']))
                 Tidak ada hasil yang cocok dengan pencarian "{{ $filters['search'] }}".
               @else
@@ -327,6 +352,134 @@ tr:hover{background:#f9fafb}
 @endif
 
 <script>
+  // All eligible IDs from server (across all pages)
+  const allEligibleData = @json($allEligibleIds ?? []);
+  const STORAGE_KEY = 'pengajuan_broadcast_selection';
+
+  // Get selected IDs from localStorage
+  function getSelectedIds() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Save selected IDs to localStorage
+  function saveSelectedIds(ids) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+  }
+
+  // Get biro name by ID from allEligibleData
+  function getBiroName(id) {
+    const item = allEligibleData.find(d => d.id == id);
+    return item ? item.biro_name : 'Biro';
+  }
+
+  // Update hidden inputs and display count
+  function updateBroadcastForm() {
+    const selectedIds = getSelectedIds();
+    const container = document.getElementById('hiddenIdsContainer');
+    const selectedCountEl = document.getElementById('selectedCount');
+    
+    // Clear and rebuild hidden inputs
+    container.innerHTML = '';
+    selectedIds.forEach(id => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'ids[]';
+      input.value = id;
+      container.appendChild(input);
+    });
+    
+    // Update count display
+    selectedCountEl.textContent = selectedIds.length + ' biro dipilih';
+    
+    // Sync visible checkboxes
+    document.querySelectorAll('.broadcast-checkbox').forEach(cb => {
+      cb.checked = selectedIds.includes(parseInt(cb.value));
+    });
+    
+    // Update select all state
+    updateSelectAllState();
+  }
+
+  // Update Select All checkbox state
+  function updateSelectAllState() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    if (!selectAllCheckbox) return;
+    
+    const selectedIds = getSelectedIds();
+    const allEligibleIds = allEligibleData.map(d => d.id);
+    
+    if (selectedIds.length === 0) {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = false;
+    } else if (allEligibleIds.every(id => selectedIds.includes(id))) {
+      selectAllCheckbox.checked = true;
+      selectAllCheckbox.indeterminate = false;
+    } else {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = true;
+    }
+  }
+
+  // Toggle single ID
+  function toggleSelection(id, biroName) {
+    let selectedIds = getSelectedIds();
+    const idNum = parseInt(id);
+    
+    if (selectedIds.includes(idNum)) {
+      selectedIds = selectedIds.filter(i => i !== idNum);
+    } else {
+      selectedIds.push(idNum);
+    }
+    
+    saveSelectedIds(selectedIds);
+    updateBroadcastForm();
+  }
+
+  // Select all eligible across ALL pages
+  function selectAllEligible() {
+    const allIds = allEligibleData.map(d => d.id);
+    saveSelectedIds(allIds);
+    updateBroadcastForm();
+  }
+
+  // Deselect all
+  function deselectAll() {
+    saveSelectedIds([]);
+    updateBroadcastForm();
+  }
+
+  // Clear selection button
+  function clearSelection() {
+    if (getSelectedIds().length === 0) return;
+    if (confirm('Hapus semua pilihan?')) {
+      deselectAll();
+    }
+  }
+
+  // Confirm broadcast
+  function confirmBroadcast() {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+      alert('Pilih minimal 1 biro untuk broadcast');
+      return false;
+    }
+    
+    const biroNames = selectedIds.map(id => getBiroName(id)).join(', ');
+    const confirmed = confirm('Kirim notifikasi ke ' + selectedIds.length + ' biro?\n\n' + biroNames);
+    
+    if (confirmed) {
+      // Clear selection after successful submit
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    
+    return confirmed;
+  }
+
   // Server-side search with debounce (500ms delay)
   const searchInput = document.getElementById('searchBiro');
   const filterForm = document.getElementById('filterForm');
@@ -340,5 +493,30 @@ tr:hover{background:#f9fafb}
       }, 500);
     });
   }
+
+  // Initialize on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    // Sync checkboxes with stored selection
+    updateBroadcastForm();
+    
+    // Select All checkbox handler
+    const selectAllCheckbox = document.getElementById('selectAll');
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+          selectAllEligible();
+        } else {
+          deselectAll();
+        }
+      });
+    }
+    
+    // Individual checkbox handlers
+    document.querySelectorAll('.broadcast-checkbox').forEach(cb => {
+      cb.addEventListener('change', function() {
+        toggleSelection(this.value, this.dataset.biro);
+      });
+    });
+  });
 </script>
 @endsection

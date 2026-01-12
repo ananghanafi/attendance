@@ -43,14 +43,20 @@ select:focus,input:focus{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color
         </select>
       </div>
       <div>
-        <label for="wfo_maks">WFO Maksimal (%)</label>
+        <label for="tipe_persentase">Tipe Persentase</label>
+        <select id="tipe_persentase" name="tipe_persentase" required>
+          <option value="wfo">WFO (Work From Office)</option>
+          <option value="wfa">WFA (Work From Anywhere)</option>
+        </select>
+      </div>
+      <div>
         @php
-          $wfoVal = $row->persentase_decimal;
-          if ($wfoVal === null && $row->persentase !== null) {
-            $wfoVal = $row->persentase;
-          }
+          $wfoVal = $row->persentase_decimal ?? $row->persentase ?? 0;
+          $wfaVal = $row->persentase_wfa ?? (100 - $wfoVal);
         @endphp
-        <input type="number" id="wfo_maks" name="wfo_maks" min="0" max="100" step="0.01" required value="{{ $wfoVal }}">
+        <label for="nilai_persentase"><span id="label_persentase">WFO</span> Maksimal (%)</label>
+        <input type="number" id="nilai_persentase" name="nilai_persentase" min="0" max="100" step="0.01" required value="{{ $wfoVal }}">
+        <div id="info_persentase" style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
       </div>
       <div>
         <label for="bulan">Bulan</label>
@@ -86,6 +92,25 @@ select:focus,input:focus{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color
   const tahunEl = document.getElementById('tahun');
   const tglAwalEl = document.getElementById('tgl_awal');
   const tglAkhirEl = document.getElementById('tgl_akhir');
+
+  // --- Persentase WFO/WFA ---
+  const tipePersentase = document.getElementById('tipe_persentase');
+  const nilaiPersentase = document.getElementById('nilai_persentase');
+  const labelPersentase = document.getElementById('label_persentase');
+  const infoPersentase = document.getElementById('info_persentase');
+
+  function updatePersentaseInfo() {
+    const tipe = tipePersentase.value;
+    if (tipe === 'wfo') {
+      labelPersentase.textContent = 'WFO';
+    } else {
+      labelPersentase.textContent = 'WFA';
+    }
+  }
+
+  tipePersentase.addEventListener('change', updatePersentaseInfo);
+  nilaiPersentase.addEventListener('input', updatePersentaseInfo);
+  updatePersentaseInfo();
 
   const bulanNames = [
     'Januari','Februari','Maret','April','Mei','Juni',

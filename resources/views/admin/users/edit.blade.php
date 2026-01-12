@@ -118,7 +118,7 @@
             <div>
               <label for="telp">No. Telp</label>
               <input type="tel" id="telp" name="telp" required maxlength="25" value="{{ old('telp', $row->telp) }}" pattern="[+]?[0-9\s\-]+" title="Format: 08xx, 628xx, +62 8xx, atau dengan strip" placeholder="08xx, 628xx, +62 8xx-xxx">
-              <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Contoh: 083824573711, +62 838-2457-3711 (otomatis ke format 628xxx)</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:4px"></div>
             </div>
 
             <div>

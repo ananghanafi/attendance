@@ -99,7 +99,8 @@ class PengajuanWfoController extends Controller
                     'kk.periode',
                     'kk.tgl_awal',
                     'kk.tgl_akhir',
-                    'kk.persentase_decimal'
+                    'kk.persentase',
+                    'kk.persentase_wfa'
                 ]);
 
             // Apply filters
@@ -136,7 +137,8 @@ class PengajuanWfoController extends Controller
                     kk.periode,
                     kk.tgl_awal,
                     kk.tgl_akhir,
-                    kk.persentase_decimal,
+                    kk.persentase,
+                    kk.persentase_wfa,
                     ROW_NUMBER() OVER (PARTITION BY pw.biro_id ORDER BY kk.tgl_awal DESC) as row_num
                 ");
 
@@ -164,7 +166,8 @@ class PengajuanWfoController extends Controller
                     'kk.periode',
                     'kk.tgl_awal',
                     'kk.tgl_akhir',
-                    'kk.persentase_decimal'
+                    'kk.persentase',
+                    'kk.persentase_wfa'
                 ]);
 
             // Apply filters
@@ -217,6 +220,25 @@ class PengajuanWfoController extends Controller
             $p->canEdit = $this->isPeriodeEditable($p->tgl_awal, $p->tgl_akhir);
         }
 
+        // Get ALL eligible IDs for broadcast (canEdit = true) across all pages
+        $allEligibleIds = [];
+        if ($isAdminOrVP) {
+            $eligibleQuery = DB::table('pengajuan_wao as pw')
+                ->join('biro as b', 'pw.biro_id', '=', 'b.id')
+                ->join('kalender_kerja_v2 as kk', 'pw.kalender', '=', 'kk.kalender')
+                ->where('b.is_proyek', false)
+                ->whereRaw("CURRENT_DATE >= kk.tgl_awal AND CURRENT_DATE <= kk.tgl_akhir")
+                ->select('pw.id', 'b.biro_name');
+
+            $allEligible = $eligibleQuery->get();
+            foreach ($allEligible as $item) {
+                $allEligibleIds[] = [
+                    'id' => $item->id,
+                    'biro_name' => $item->biro_name
+                ];
+            }
+        }
+
         return view('admin.pengajuan.index', [
             'pengajuans' => $pengajuans,
             'biros' => $biros,
@@ -227,6 +249,7 @@ class PengajuanWfoController extends Controller
                 'tahun' => $tahun,
             ],
             'isAdminOrVP' => $isAdminOrVP,
+            'allEligibleIds' => $allEligibleIds,
         ]);
     }
 
@@ -703,5 +726,74 @@ class PengajuanWfoController extends Controller
 
         // Tanggal hari ini harus >= tgl_awal DAN <= tgl_akhir
         return $today >= $startDate && $today <= $endDate;
+    }
+
+    /**
+     * Broadcast ulang notifikasi WhatsApp ke biro tertentu
+     */
+    public function broadcast(Request $request)
+    {
+        $this->ensureAdminOrVP();
+
+        $id = $request->input('id');
+        if (!$id) {
+            return redirect()->route('pengajuan.index')->with('error', 'Pengajuan tidak ditemukan');
+        }
+
+        $pengajuan = DB::table('pengajuan_wao')->where('id', $id)->first();
+        if (!$pengajuan) {
+            return redirect()->route('pengajuan.index')->with('error', 'Pengajuan tidak ditemukan');
+        }
+
+        try {
+            $waService = new \App\Services\WhatsAppNotificationService();
+            $result = $waService->sendNotificationForPengajuan($pengajuan->id);
+            
+            if ($result) {
+                $biroName = DB::table('biro')->where('id', $pengajuan->biro_id)->value('biro_name') ?? 'Biro';
+                return redirect()->route('pengajuan.index')->with('status', "Notifikasi berhasil dikirim ke {$biroName}");
+            } else {
+                return redirect()->route('pengajuan.index')->with('error', 'Gagal mengirim notifikasi (tidak ada penerima)');
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Broadcast error: ' . $e->getMessage());
+            return redirect()->route('pengajuan.index')->with('error', 'Gagal mengirim notifikasi: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Broadcast notifikasi WhatsApp ke multiple biro sekaligus
+     */
+    public function broadcastMultiple(Request $request)
+    {
+        $this->ensureAdminOrVP();
+
+        $ids = $request->input('ids', []);
+        
+        if (empty($ids)) {
+            return redirect()->route('pengajuan.index')->with('error', 'Tidak ada biro yang dipilih');
+        }
+
+        $successCount = 0;
+        $failCount = 0;
+        $successBiro = [];
+
+        try {
+            $waService = new \App\Services\WhatsAppNotificationService();
+            
+            foreach ($ids as $id) {
+                $pengajuan = DB::table('pengajuan_wao')->where('id', $id)->first();
+                if (!$pengajuan) {
+                    continue;
+                }
+
+                $waService->sendNotificationForPengajuan($pengajuan->id);
+            }
+
+            return redirect()->route('pengajuan.index')->with('status', 'Broadcast berhasil dikirim');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Broadcast multiple error: ' . $e->getMessage());
+            return redirect()->route('pengajuan.index')->with('error', 'Gagal mengirim notifikasi: ' . $e->getMessage());
+        }
     }
 }

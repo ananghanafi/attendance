@@ -146,7 +146,6 @@ class WhatsAppNotificationService
         $codeName = env('WHATSAPP_CODE_NAME');
         $endPoint = env('WHATSAPP_URL');
 
-        // Jika env tidak di-set, skip pengiriman
         if (empty($key) || empty($codeName) || empty($endPoint)) {
             Log::warning('WhatsApp API credentials not configured. Skipping notification.');
             return [
@@ -155,13 +154,10 @@ class WhatsAppNotificationService
             ];
         }
 
-        // Encode pesan ke JSON
         $data_pesan = json_encode(['messageList' => $recipients]);
 
-        // Buat JWT token
         $access_token = $this->createJwtToken($codeName, $key);
 
-        // Kirim request
         return $this->sendJwtRequest(
             $endPoint,
             ['data' => $data_pesan],
@@ -219,5 +215,108 @@ class WhatsAppNotificationService
         Log::info('WhatsApp API Response: ' . $result);
 
         return json_decode($result, true) ?? $result;
+    }
+
+    /**
+     * kirim notif tertentu berdasarkan pengajuan ID
+     * kirim ke user is_kirim = true
+     *
+     * @param int $pengajuanId ID dari pengajuan_wao
+     * @return bool True jika berhasil kirim ke setidaknya 1 user
+     */
+    public function sendNotificationForPengajuan(int $pengajuanId): bool
+    {
+        // Ambil data pengajuan dengan info kalender
+        $pengajuan = DB::table('pengajuan_wao as pw')
+            ->join('kalender_kerja_v2 as kk', 'pw.kalender', '=', 'kk.kalender')
+            ->where('pw.id', $pengajuanId)
+            ->select([
+                'pw.id',
+                'pw.biro_id',
+                'pw.kalender',
+                'kk.id as kalender_id',
+                'kk.tgl_awal',
+                'kk.tgl_akhir',
+                'kk.persentase',
+                'kk.persentase_wfa'
+            ])
+            ->first();
+
+        if (!$pengajuan) {
+            Log::warning("Pengajuan not found: {$pengajuanId}");
+            return false;
+        }
+
+        // Parse kalender string (format: "minggu-bulan-tahun")
+        $parts = explode('-', $pengajuan->kalender);
+        if (count($parts) !== 3) {
+            Log::warning("Invalid kalender format: {$pengajuan->kalender}");
+            return false;
+        }
+
+        $minggu = (int) $parts[0];
+        $bulan = (int) $parts[1];
+        $tahun = (int) $parts[2];
+
+        // Ambil user dari biro yang sama, dengan is_kirim = true
+        $users = User::where('biro_id', $pengajuan->biro_id)
+            ->where('is_kirim', true)
+            ->whereNotNull('telp')
+            ->where('telp', '!=', '')
+            ->where('isdel', false)
+            ->get();
+
+        if ($users->isEmpty()) {
+            Log::info("No users with is_kirim=true found for biro_id: {$pengajuan->biro_id}");
+            return false;
+        }
+
+        $recipients = [];
+        $namaBulan = $this->getNamaBulan($bulan);
+
+        // Ambil nama biro
+        $biroName = DB::table('biro')
+            ->where('id', $pengajuan->biro_id)
+            ->value('biro_name') ?? 'Unknown';
+
+        foreach ($users as $user) {
+            // Generate magic token untuk user ini
+            $magicToken = MagicToken::generateForUser(
+                $user->id,
+                $pengajuan->kalender_id,
+                $pengajuan->kalender
+            );
+
+            // Buat magic link dengan format /pengajuan-wfo/{token}
+            $magicLink = url('/pengajuan-wfo/' . $magicToken->raw_token);
+
+            // Render template pesan
+            $message = view('template-wa-pengajuan-wfo', [
+                'nama' => $user->nama ?? 'User',
+                'biro' => $biroName,
+                'minggu' => $minggu,
+                'bulan' => $namaBulan,
+                'tahun' => $tahun,
+                'magic_link' => $magicLink,
+            ])->render();
+
+            // Format nomor telepon (pastikan format Indonesia)
+            $phoneNumber = $this->formatPhoneNumber($user->telp);
+
+            $recipients[] = [
+                'number' => $phoneNumber,
+                'message' => $message,
+                'isMedia' => false,
+                'typeMedia' => 'text',
+                'urlMedia' => '',
+            ];
+        }
+
+        // Kirim ke API WhatsApp
+        $response = $this->sendToWhatsAppApi($recipients);
+
+        Log::info("Broadcast sent to {$biroName}: " . count($recipients) . " users");
+
+        return count($recipients) > 0;
     }
 }
