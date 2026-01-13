@@ -20,7 +20,7 @@ select:focus,input:focus{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color
 @section('content')
 <div class="card">
   @if($errors->any())
-    <div class="error">{{ $errors->first() }}</div>
+  <div class="error">{{ $errors->first() }}</div>
   @endif
 
   <form method="POST" action="{{ route('kalender.update', ['id' => $row->id]) }}" style="margin-top:14px">
@@ -32,14 +32,14 @@ select:focus,input:focus{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color
         <label for="minggu">Minggu ke-</label>
         <select id="minggu" name="minggu" required>
           @php
-            $parsedMinggu = null;
-            if (!empty($row->periode) && preg_match('/(\d+)/', $row->periode, $m)) {
-              $parsedMinggu = (int) $m[1];
-            }
+          $parsedMinggu = null;
+          if (!empty($row->periode) && preg_match('/(\d+)/', $row->periode, $m)) {
+          $parsedMinggu = (int) $m[1];
+          }
           @endphp
           @for($i=1;$i<=6;$i++)
-            <option value="{{ $i }}" @selected(($parsedMinggu ?? 1) === $i)>{{ $i }}</option>
-          @endfor
+            <option value="{{ $i }}" @selected(($parsedMinggu ?? 1)===$i)>{{ $i }}</option>
+            @endfor
         </select>
       </div>
       <div>
@@ -51,8 +51,8 @@ select:focus,input:focus{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color
       </div>
       <div>
         @php
-          $wfoVal = $row->persentase_decimal ?? $row->persentase ?? 0;
-          $wfaVal = $row->persentase_wfa ?? (100 - $wfoVal);
+        $wfoVal = $row->persentase_decimal ?? $row->persentase ?? 0;
+        $wfaVal = $row->persentase_wfa ?? (100 - $wfoVal);
         @endphp
         <label for="nilai_persentase"><span id="label_persentase">WFO</span> Maksimal (%)</label>
         <input type="number" id="nilai_persentase" name="nilai_persentase" min="0" max="100" step="0.01" required value="{{ $wfoVal }}">
@@ -87,7 +87,8 @@ select:focus,input:focus{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color
 @endsection
 
 @section('scripts')
-  // Initialize bulan/tahun selects for edit form (no <script> wrapper here — layout provides the script tag)
+// Initialize bulan/tahun selects for edit form (no <script>
+  wrapper here— layout provides the script tag)
   const bulanEl = document.getElementById('bulan');
   const tahunEl = document.getElementById('tahun');
   const tglAwalEl = document.getElementById('tgl_awal');
@@ -113,8 +114,8 @@ select:focus,input:focus{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color
   updatePersentaseInfo();
 
   const bulanNames = [
-    'Januari','Februari','Maret','April','Mei','Juni',
-    'Juli','Agustus','September','Oktober','November','Desember'
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
   ];
 
   function initBulan() {
@@ -165,4 +166,4 @@ select:focus,input:focus{box-shadow:0 0 0 3px rgba(89,102,247,0.08);border-color
       }
     });
   }
-@endsection
+  @endsection

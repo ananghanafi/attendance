@@ -365,27 +365,49 @@ class PengajuanWfoController extends Controller
 
     /**
      * Set session untuk edit pengajuan
+     * Admin/VP bisa edit kapan saja (selama periode aktif)
+     * User biasa HANYA bisa edit jika login via magic link dan status belum 'final'
      */
     public function setEdit(Request $request)
     {
         $id = $request->input('id');
         
-        // Cek akses
-        $this->ensureCanAccessPengajuan($id);
-        
         // Cek apakah periode bisa diedit
         $pengajuan = DB::table('pengajuan_wao as pw')
             ->leftJoin('kalender_kerja_v2 as kk', 'pw.kalender', '=', 'kk.kalender')
             ->where('pw.id', $id)
-            ->select(['kk.tgl_awal', 'kk.tgl_akhir'])
+            ->select(['pw.biro_id', 'pw.status', 'kk.tgl_awal', 'kk.tgl_akhir'])
             ->first();
         
         if (!$pengajuan) {
             return redirect()->route('pengajuan.index')->with('error', 'Pengajuan tidak ditemukan');
         }
         
+        // Cek apakah periode masih dalam rentang aktif
         if (!$this->isPeriodeEditable($pengajuan->tgl_awal, $pengajuan->tgl_akhir)) {
             return redirect()->route('pengajuan.index')->with('error', 'Periode pengajuan ini sudah tidak dapat diedit. Hanya pengajuan dalam rentang tanggal aktif yang dapat diedit.');
+        }
+
+        // Admin/VP bisa edit kapan saja
+        if ($this->isAdminOrVP()) {
+            session(['pengajuan_id' => $id]);
+            return redirect()->route('pengajuan.edit');
+        }
+
+        // User biasa: HARUS punya magic_token_id di session (login via link broadcast)
+        if (!session('magic_token_id')) {
+            return redirect()->route('pengajuan.index')->with('error', 'Anda tidak memiliki akses untuk mengedit pengajuan ini. Silakan gunakan link yang dikirim via WhatsApp.');
+        }
+
+        // User biasa: cek apakah dari biro yang sama
+        $user = Auth::user();
+        if ($pengajuan->biro_id !== $user->biro_id) {
+            abort(403);
+        }
+
+        // User biasa: cek status - hanya bisa edit jika belum final
+        if (strtolower($pengajuan->status ?? '') === 'final') {
+            return redirect()->route('pengajuan.index')->with('error', 'Pengajuan ini sudah disimpan permanen dan tidak dapat diedit lagi.');
         }
         
         session(['pengajuan_id' => $id]);
@@ -394,7 +416,8 @@ class PengajuanWfoController extends Controller
 
     /**
      * Edit pengajuan (form untuk edit WFO/WFA)
-     * Akses: Admin/VP atau user dari biro yang sama
+     * Admin/VP bisa edit kapan saja
+     * User biasa HANYA bisa edit jika login via magic link dan status belum 'final'
      */
     public function edit()
     {
@@ -402,9 +425,6 @@ class PengajuanWfoController extends Controller
         if (!$id) {
             return redirect()->route('pengajuan.index')->with('error', 'Silakan pilih pengajuan dari daftar');
         }
-
-        // Cek akses: admin/VP atau user dari biro yang sama
-        $this->ensureCanAccessPengajuan($id);
 
         // Get pengajuan master
         // JOIN langsung via kolom kalender yang sama format "minggu-bulan-tahun"
@@ -425,6 +445,28 @@ class PengajuanWfoController extends Controller
 
         if (!$pengajuan) {
             return redirect()->route('pengajuan.index')->with('error', 'Pengajuan tidak ditemukan');
+        }
+
+        // Cek akses
+        $user = Auth::user();
+        $isAdminOrVP = $this->isAdminOrVP();
+        
+        // Jika bukan admin/VP
+        if (!$isAdminOrVP) {
+            // HARUS punya magic_token_id di session (login via link broadcast)
+            if (!session('magic_token_id')) {
+                return redirect()->route('pengajuan.index')->with('error', 'Anda tidak memiliki akses untuk mengedit pengajuan ini. Silakan gunakan link yang dikirim via WhatsApp.');
+            }
+
+            // Cek apakah dari biro yang sama
+            if ($pengajuan->biro_id !== $user->biro_id) {
+                abort(403);
+            }
+
+            // Cek status - jika sudah final, redirect ke view only
+            if (strtolower($pengajuan->status ?? '') === 'final') {
+                return redirect()->route('pengajuan.show')->with('info', 'Pengajuan ini sudah disimpan permanen. Anda hanya dapat melihat data.');
+            }
         }
 
         // Cek lagi apakah periode masih bisa diedit (untuk keamanan)
@@ -495,7 +537,10 @@ class PengajuanWfoController extends Controller
 
     /**
      * Update pengajuan WFO/WFA per pegawai
-     * Akses: Admin/VP atau user dari biro yang sama
+     * Admin/VP atau user dengan akses bisa update
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request)
     {
@@ -504,8 +549,8 @@ class PengajuanWfoController extends Controller
             return redirect()->route('pengajuan.index')->with('error', 'Silakan pilih pengajuan dari daftar');
         }
 
-        // Cek akses: admin/VP atau user dari biro yang sama
-        $this->ensureCanAccessPengajuan($id);
+        // Cek apakah ini save permanen atau draft
+        $isFinal = $request->input('save_final', false);
 
         try {
             DB::beginTransaction();
@@ -522,6 +567,20 @@ class PengajuanWfoController extends Controller
                 return redirect()->route('pengajuan.index')->with('error', 'Pengajuan tidak ditemukan');
             }
 
+            // Cek akses
+            $user = Auth::user();
+            $isAdminOrVP = $this->isAdminOrVP();
+            
+            // Jika bukan admin/VP, cek apakah dari biro yang sama
+            if (!$isAdminOrVP && $pengajuan->biro_id !== $user->biro_id) {
+                abort(403);
+            }
+
+            // Jika bukan admin/VP dan status sudah final, tolak update
+            if (!$isAdminOrVP && strtolower($pengajuan->status ?? '') === 'final') {
+                return redirect()->route('pengajuan.show')->with('error', 'Pengajuan ini sudah disimpan permanen dan tidak dapat diedit lagi.');
+            }
+
             // Get attendance data from request
             $attendance = $request->input('attendance', []);
             
@@ -529,12 +588,20 @@ class PengajuanWfoController extends Controller
             $totalPegawai = count($attendance);
             $maxPersentase = $pengajuan->persentase_decimal ?? 100;
             
-            // Validasi persentase WFO per hari tidak melebihi batas
+            // Get hari libur untuk validasi
+            $hariLiburValidasi = $this->getHariLiburDalamPeriode($pengajuan->tgl_awal, $pengajuan->tgl_akhir);
+            
+            // Validasi persentase WFO per hari tidak melebihi batas (skip hari libur)
             if ($totalPegawai > 0) {
                 $days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat'];
                 $dayNames = ['senin' => 'Senin', 'selasa' => 'Selasa', 'rabu' => 'Rabu', 'kamis' => 'Kamis', 'jumat' => 'Jumat'];
                 
                 foreach ($days as $day) {
+                    // Skip validasi untuk hari libur
+                    if ($hariLiburValidasi[$day]) {
+                        continue;
+                    }
+                    
                     $wfoCount = 0;
                     foreach ($attendance as $nip => $dayData) {
                         if (isset($dayData[$day]) && $dayData[$day]) {
@@ -572,24 +639,30 @@ class PengajuanWfoController extends Controller
                 ];
             }
 
+            // Get hari libur untuk periode ini
+            $hariLibur = $this->getHariLiburDalamPeriode($pengajuan->tgl_awal, $pengajuan->tgl_akhir);
+
             // Update each employee's attendance
             foreach ($attendance as $nip => $days) {
                 // Update pengajuan_wao_detail (existing table)
+                // Jika hari libur, simpan null. Jika tidak, simpan true/false
                 DB::table('pengajuan_wao_detail')
                     ->where('pengajuan_id', $id)
                     ->where('nip', $nip)
                     ->update([
-                        'senin' => isset($days['senin']) ? (bool)$days['senin'] : false,
-                        'selasa' => isset($days['selasa']) ? (bool)$days['selasa'] : false,
-                        'rabu' => isset($days['rabu']) ? (bool)$days['rabu'] : false,
-                        'kamis' => isset($days['kamis']) ? (bool)$days['kamis'] : false,
-                        'jumat' => isset($days['jumat']) ? (bool)$days['jumat'] : false,
+                        'senin' => $hariLibur['senin'] ? null : (isset($days['senin']) ? (bool)$days['senin'] : false),
+                        'selasa' => $hariLibur['selasa'] ? null : (isset($days['selasa']) ? (bool)$days['selasa'] : false),
+                        'rabu' => $hariLibur['rabu'] ? null : (isset($days['rabu']) ? (bool)$days['rabu'] : false),
+                        'kamis' => $hariLibur['kamis'] ? null : (isset($days['kamis']) ? (bool)$days['kamis'] : false),
+                        'jumat' => $hariLibur['jumat'] ? null : (isset($days['jumat']) ? (bool)$days['jumat'] : false),
                     ]);
                 
                 // Save to pengajuan_wao_detail_tanggal (new table with dates)
+                // Jika hari libur, simpan null sebagai status
                 if ($tglAwal) {
                     foreach (['senin', 'selasa', 'rabu', 'kamis', 'jumat'] as $day) {
-                        $status = isset($days[$day]) && $days[$day] ? 1 : 0; // 1 = WFO, 0 = WFA
+                        // Jika hari libur, status = null. Jika tidak, 1 = WFO, 0 = WFA
+                        $status = $hariLibur[$day] ? null : (isset($days[$day]) && $days[$day] ? 1 : 0);
                         $tanggal = $dayDates[$day];
                         
                         // Upsert: update if exists, insert if not
@@ -608,37 +681,158 @@ class PengajuanWfoController extends Controller
                                 'pengajuan_id' => $id,
                                 'nip' => $nip,
                                 'tanggal' => $tanggal,
-                                'status' => $status, // 1 = WFO, 0 = WFA
+                                'status' => $status, // 1 = WFO, 0 = WFA, null = Libur
                             ]);
                         }
                     }
                 }
             }
             
-            // Update status pengajuan_wao dari 'draft' menjadi 'final' setelah edit
-            DB::table('pengajuan_wao')
-                ->where('id', $id)
-                ->update(['status' => 'final']);
+            // Update status pengajuan_wao
+            // Jika save_final = true, ubah ke 'final'
+            // Jika tidak, tetap 'draft' (untuk auto-save)
+            if ($isFinal) {
+                DB::table('pengajuan_wao')
+                    ->where('id', $id)
+                    ->update(['status' => 'final']);
 
-            // Expired magic token jika ada (setelah save, link tidak bisa dipakai lagi)
-            $magicTokenId = session('magic_token_id');
-            if ($magicTokenId) {
-                DB::table('magic_tokens')
-                    ->where('id', $magicTokenId)
-                    ->update(['is_used' => true]);
-                
-                // Hapus dari session
-                session()->forget('magic_token_id');
+                // Expired magic token jika ada (setelah save permanen, link tidak bisa edit lagi)
+                $magicTokenId = session('magic_token_id');
+                if ($magicTokenId) {
+                    DB::table('magic_tokens')
+                        ->where('id', $magicTokenId)
+                        ->update(['is_used' => true]);
+                    
+                    // Hapus dari session
+                    session()->forget('magic_token_id');
+                }
             }
 
             DB::commit();
 
-            // Redirect ke view mode (bukan edit mode) setelah simpan
-            // User harus kembali ke dashboard untuk edit lagi
-            return redirect()->route('pengajuan.show')->with('success', 'Pengajuan berhasil diperbarui. Data sekarang dalam mode view only.');
+            // Response berbeda untuk draft vs final
+            if ($isFinal) {
+                // Redirect ke view mode (bukan edit mode) setelah simpan permanen
+                return redirect()->route('pengajuan.show')->with('success', 'Pengajuan berhasil disimpan permanen.');
+            } else {
+                // Untuk draft/auto-save, tetap di halaman edit
+                return redirect()->route('pengajuan.edit')->with('success', 'Progress berhasil disimpan. Anda masih bisa mengedit sampai klik "Simpan Permanen".');
+            }
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Save draft via AJAX (auto-save)
+     * Menyimpan progress tanpa mengubah status menjadi final
+     */
+    public function saveDraft(Request $request)
+    {
+        $id = session('pengajuan_id');
+        if (!$id) {
+            return response()->json(['success' => false, 'message' => 'Session expired'], 401);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $pengajuan = DB::table('pengajuan_wao as pw')
+                ->leftJoin('kalender_kerja_v2 as kk', 'pw.kalender', '=', 'kk.kalender')
+                ->where('pw.id', $id)
+                ->select(['pw.*', 'kk.tgl_awal', 'kk.tgl_akhir'])
+                ->first();
+                
+            if (!$pengajuan) {
+                return response()->json(['success' => false, 'message' => 'Pengajuan tidak ditemukan'], 404);
+            }
+
+            // Cek akses
+            $user = Auth::user();
+            $isAdminOrVP = $this->isAdminOrVP();
+            
+            if (!$isAdminOrVP && $pengajuan->biro_id !== $user->biro_id) {
+                return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
+            }
+
+            if (!$isAdminOrVP && strtolower($pengajuan->status ?? '') === 'final') {
+                return response()->json(['success' => false, 'message' => 'Pengajuan sudah final'], 403);
+            }
+
+            $attendance = $request->input('attendance', []);
+            
+            // Calculate dates for each day
+            $tglAwal = $pengajuan->tgl_awal ? new \DateTime($pengajuan->tgl_awal) : null;
+            $dayDates = [];
+            if ($tglAwal) {
+                $senin = clone $tglAwal;
+                $selasa = clone $tglAwal;
+                $rabu = clone $tglAwal;
+                $kamis = clone $tglAwal;
+                $jumat = clone $tglAwal;
+                
+                $dayDates = [
+                    'senin' => $senin->format('Y-m-d'),
+                    'selasa' => $selasa->modify('+1 day')->format('Y-m-d'),
+                    'rabu' => $rabu->modify('+2 days')->format('Y-m-d'),
+                    'kamis' => $kamis->modify('+3 days')->format('Y-m-d'),
+                    'jumat' => $jumat->modify('+4 days')->format('Y-m-d'),
+                ];
+            }
+
+            $hariLibur = $this->getHariLiburDalamPeriode($pengajuan->tgl_awal, $pengajuan->tgl_akhir);
+
+            // Update each employee's attendance
+            foreach ($attendance as $nip => $days) {
+                DB::table('pengajuan_wao_detail')
+                    ->where('pengajuan_id', $id)
+                    ->where('nip', $nip)
+                    ->update([
+                        'senin' => $hariLibur['senin'] ? null : (isset($days['senin']) ? (bool)$days['senin'] : false),
+                        'selasa' => $hariLibur['selasa'] ? null : (isset($days['selasa']) ? (bool)$days['selasa'] : false),
+                        'rabu' => $hariLibur['rabu'] ? null : (isset($days['rabu']) ? (bool)$days['rabu'] : false),
+                        'kamis' => $hariLibur['kamis'] ? null : (isset($days['kamis']) ? (bool)$days['kamis'] : false),
+                        'jumat' => $hariLibur['jumat'] ? null : (isset($days['jumat']) ? (bool)$days['jumat'] : false),
+                    ]);
+                
+                if ($tglAwal) {
+                    foreach (['senin', 'selasa', 'rabu', 'kamis', 'jumat'] as $day) {
+                        $status = $hariLibur[$day] ? null : (isset($days[$day]) && $days[$day] ? 1 : 0);
+                        $tanggal = $dayDates[$day];
+                        
+                        $existing = DB::table('pengajuan_wao_detail_tanggal')
+                            ->where('pengajuan_id', $id)
+                            ->where('nip', $nip)
+                            ->where('tanggal', $tanggal)
+                            ->first();
+                        
+                        if ($existing) {
+                            DB::table('pengajuan_wao_detail_tanggal')
+                                ->where('id', $existing->id)
+                                ->update(['status' => $status]);
+                        } else {
+                            DB::table('pengajuan_wao_detail_tanggal')->insert([
+                                'pengajuan_id' => $id,
+                                'nip' => $nip,
+                                'tanggal' => $tanggal,
+                                'status' => $status,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true, 
+                'message' => 'Progress tersimpan',
+                'saved_at' => now()->format('H:i')
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Gagal menyimpan: ' . $e->getMessage()], 500);
         }
     }
 

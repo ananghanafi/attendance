@@ -9,6 +9,8 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\PengajuanWfoController;
 use App\Http\Controllers\IndexController;
 use App\Http\Controllers\MagicLinkController;
+use App\Http\Controllers\AbsenController;
+use App\Http\Controllers\ApprovalController;
 
 // Landing page -> tunjukkan login form langsung
 Route::get('/', [AuthController::class, 'showLoginForm']);
@@ -18,6 +20,10 @@ Route::get('/example-api', [IndexController::class, 'example_api']);
 
 // Magic Link Auto-Login untuk Pengajuan WFO (tidak perlu auth middleware)
 Route::get('/pengajuan-wfo/{token}', [MagicLinkController::class, 'login'])->name('magic.login');
+
+// WhatsApp Approval Magic Link (tidak perlu auth middleware)
+Route::get('/absen/approval/{token}', [ApprovalController::class, 'show'])->name('absen.approval.show');
+Route::post('/absen/approval/{token}', [ApprovalController::class, 'process'])->name('absen.approval.process');
 
 // Auth (username-based)
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -99,10 +105,17 @@ Route::middleware('auth')->group(function () {
     Route::post('/pengajuan/set-edit', [PengajuanWfoController::class, 'setEdit'])->name('pengajuan.setEdit');
     Route::get('/pengajuan/edit', [PengajuanWfoController::class, 'edit'])->name('pengajuan.edit');
     Route::put('/pengajuan/update', [PengajuanWfoController::class, 'update'])->name('pengajuan.update');
+    Route::post('/pengajuan/save-draft', [PengajuanWfoController::class, 'saveDraft'])->name('pengajuan.saveDraft');
     
     // Broadcast ulang ke biro tertentu
     Route::post('/pengajuan/broadcast', [PengajuanWfoController::class, 'broadcast'])->name('pengajuan.broadcast');
     
     // Broadcast ulang ke multiple biro
     Route::post('/pengajuan/broadcast-multiple', [PengajuanWfoController::class, 'broadcastMultiple'])->name('pengajuan.broadcastMultiple');
+
+    // Absen
+    Route::get('/absen', [AbsenController::class, 'index'])->name('absen.index');
+    Route::get('/absen/formulir', [AbsenController::class, 'showFormulir'])->name('absen.formulir');
+    Route::post('/absen/masuk', [AbsenController::class, 'storeAbsenMasuk'])->name('absen.storeMasuk');
+    Route::post('/absen/pulang', [AbsenController::class, 'storeAbsenPulang'])->name('absen.storePulang');
 });

@@ -5,9 +5,9 @@
 @section('styles')
 .layout{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start;width:100%;max-width:100%}
 @media(max-width:900px){
-  .layout{grid-template-columns:1fr}
-  .tabs{flex-direction:row;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .tab{flex:1;text-align:center;min-width:80px}
+.layout{grid-template-columns:1fr}
+.tabs{flex-direction:row;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{flex:1;text-align:center;min-width:80px}
 }
 .card,.sidebarCard{min-width:0;width:100%;max-width:100%}
 .card{overflow:hidden;background:#fff;border-radius:18px;border:1px solid #e7eaf3;box-shadow:0 10px 35px rgba(35,45,120,.08);padding:18px}
@@ -49,9 +49,9 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
   <div style="width:100%;min-width:0;max-width:100%">
     <!-- Success Message -->
     @if(session('status'))
-      <div style="background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;padding:14px 16px;border-radius:12px;margin-bottom:16px;font-size:15px">
-        {{ session('status') }}
-      </div>
+    <div style="background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;padding:14px 16px;border-radius:12px;margin-bottom:16px;font-size:15px">
+      {{ session('status') }}
+    </div>
     @endif
 
     <!-- User Panel -->
@@ -83,33 +83,33 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
             </thead>
             <tbody>
               @forelse($users as $u)
-                <tr class="user-row">
-                  <td>{{ $loop->iteration }}</td>
-                  <td>{{ $u->nama }}</td>
-                  <td>{{ $u->username }}</td>
-                  <td>{{ $u->nip }}</td>
-                  <td>{{ $u->role_name }}</td>
-                  <td>{{ $u->biro_name }}</td>
-                  <td>
-                    <div style="display:flex;gap:6px;align-items:center">
-                      <form method="POST" action="{{ route('users.setEdit') }}" style="margin:0">
-                        @csrf
-                        <input type="hidden" name="id" value="{{ $u->id }}">
-                        <button type="submit" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
-                      </form>
-                      <form method="POST" action="{{ route('users.destroy') }}" onsubmit="return confirm('Yakin hapus user ini?');" style="margin:0">
-                        @csrf
-                        @method('DELETE')
-                        <input type="hidden" name="id" value="{{ $u->id }}">
-                        <button type="submit" class="btn" style="padding:8px 10px;background:#fff1f2;color:#991b1b;border-color:#fecdd3;white-space:nowrap">Hapus</button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
+              <tr class="user-row">
+                <td>{{ $loop->iteration }}</td>
+                <td>{{ $u->nama }}</td>
+                <td>{{ $u->username }}</td>
+                <td>{{ $u->nip }}</td>
+                <td>{{ $u->role_name }}</td>
+                <td>{{ $u->biro_name }}</td>
+                <td>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <form method="POST" action="{{ route('users.setEdit') }}" style="margin:0">
+                      @csrf
+                      <input type="hidden" name="id" value="{{ $u->id }}">
+                      <button type="submit" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
+                    </form>
+                    <form method="POST" action="{{ route('users.destroy') }}" onsubmit="return confirm('Yakin hapus user ini?');" style="margin:0">
+                      @csrf
+                      @method('DELETE')
+                      <input type="hidden" name="id" value="{{ $u->id }}">
+                      <button type="submit" class="btn" style="padding:8px 10px;background:#fff1f2;color:#991b1b;border-color:#fecdd3;white-space:nowrap">Hapus</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
               @empty
-                <tr id="emptyUser">
-                  <td colspan="7" style="color:var(--text-muted);text-align:center">Belum ada data user.</td>
-                </tr>
+              <tr id="emptyUser">
+                <td colspan="7" style="color:var(--text-muted);text-align:center">Belum ada data user.</td>
+              </tr>
               @endforelse
             </tbody>
           </table>
@@ -145,31 +145,31 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
             </thead>
             <tbody>
               @forelse($biros as $b)
-                <tr class="biro-row">
-                  <td>{{ $loop->iteration }}</td>
-                  <td>{{ $b->biro_name }}</td>
-                  <td>{{ $b->divisi }}</td>
-                  <td>{{ $b->is_proyek ? 'Ya' : 'Tidak' }}</td>
-                  <td>
-                    <div style="display:flex;gap:6px;align-items:center">
-                      <form method="POST" action="{{ route('biro.setEdit') }}" style="margin:0">
-                        @csrf
-                        <input type="hidden" name="id" value="{{ $b->id }}">
-                        <button type="submit" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
-                      </form>
-                      <form method="POST" action="{{ route('biro.destroy') }}" onsubmit="return confirm('Yakin hapus biro ini?');" style="margin:0">
-                        @csrf
-                        @method('DELETE')
-                        <input type="hidden" name="id" value="{{ $b->id }}">
-                        <button type="submit" class="btn" style="padding:8px 10px;background:#fff1f2;color:#991b1b;border-color:#fecdd3;white-space:nowrap">Hapus</button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
+              <tr class="biro-row">
+                <td>{{ $loop->iteration }}</td>
+                <td>{{ $b->biro_name }}</td>
+                <td>{{ $b->divisi }}</td>
+                <td>{{ $b->is_proyek ? 'Ya' : 'Tidak' }}</td>
+                <td>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <form method="POST" action="{{ route('biro.setEdit') }}" style="margin:0">
+                      @csrf
+                      <input type="hidden" name="id" value="{{ $b->id }}">
+                      <button type="submit" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
+                    </form>
+                    <form method="POST" action="{{ route('biro.destroy') }}" onsubmit="return confirm('Yakin hapus biro ini?');" style="margin:0">
+                      @csrf
+                      @method('DELETE')
+                      <input type="hidden" name="id" value="{{ $b->id }}">
+                      <button type="submit" class="btn" style="padding:8px 10px;background:#fff1f2;color:#991b1b;border-color:#fecdd3;white-space:nowrap">Hapus</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
               @empty
-                <tr id="emptyBiro">
-                  <td colspan="5" style="color:var(--text-muted);text-align:center">Belum ada data biro.</td>
-                </tr>
+              <tr id="emptyBiro">
+                <td colspan="5" style="color:var(--text-muted);text-align:center">Belum ada data biro.</td>
+              </tr>
               @endforelse
             </tbody>
           </table>
@@ -203,29 +203,29 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
             </thead>
             <tbody>
               @forelse($jabatans as $j)
-                <tr class="jabatan-row">
-                  <td>{{ $loop->iteration }}</td>
-                  <td>{{ $j->jabatan }}</td>
-                  <td>
-                    <div style="display:flex;gap:6px;align-items:center">
-                      <form method="POST" action="{{ route('jabatan.setEdit') }}" style="margin:0">
-                        @csrf
-                        <input type="hidden" name="id" value="{{ $j->id }}">
-                        <button type="submit" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
-                      </form>
-                      <form method="POST" action="{{ route('jabatan.destroy') }}" onsubmit="return confirm('Yakin hapus jabatan ini?');" style="margin:0">
-                        @csrf
-                        @method('DELETE')
-                        <input type="hidden" name="id" value="{{ $j->id }}">
-                        <button type="submit" class="btn" style="padding:8px 10px;background:#fff1f2;color:#991b1b;border-color:#fecdd3;white-space:nowrap">Hapus</button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
+              <tr class="jabatan-row">
+                <td>{{ $loop->iteration }}</td>
+                <td>{{ $j->jabatan }}</td>
+                <td>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <form method="POST" action="{{ route('jabatan.setEdit') }}" style="margin:0">
+                      @csrf
+                      <input type="hidden" name="id" value="{{ $j->id }}">
+                      <button type="submit" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
+                    </form>
+                    <form method="POST" action="{{ route('jabatan.destroy') }}" onsubmit="return confirm('Yakin hapus jabatan ini?');" style="margin:0">
+                      @csrf
+                      @method('DELETE')
+                      <input type="hidden" name="id" value="{{ $j->id }}">
+                      <button type="submit" class="btn" style="padding:8px 10px;background:#fff1f2;color:#991b1b;border-color:#fecdd3;white-space:nowrap">Hapus</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
               @empty
-                <tr id="emptyJabatan">
-                  <td colspan="3" style="color:var(--text-muted);text-align:center">Belum ada data jabatan.</td>
-                </tr>
+              <tr id="emptyJabatan">
+                <td colspan="3" style="color:var(--text-muted);text-align:center">Belum ada data jabatan.</td>
+              </tr>
               @endforelse
             </tbody>
           </table>
@@ -259,29 +259,29 @@ th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
             </thead>
             <tbody>
               @forelse($roles as $r)
-                <tr class="role-row">
-                  <td>{{ $loop->iteration }}</td>
-                  <td>{{ $r->role_name }}</td>
-                  <td>
-                    <div style="display:flex;gap:6px;align-items:center">
-                      <form method="POST" action="{{ route('role.setEdit') }}" style="margin:0">
-                        @csrf
-                        <input type="hidden" name="id" value="{{ $r->id }}">
-                        <button type="submit" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
-                      </form>
-                      <form method="POST" action="{{ route('role.destroy') }}" onsubmit="return confirm('Yakin hapus role ini?');" style="margin:0">
-                        @csrf
-                        @method('DELETE')
-                        <input type="hidden" name="id" value="{{ $r->id }}">
-                        <button type="submit" class="btn" style="padding:8px 10px;background:#fff1f2;color:#991b1b;border-color:#fecdd3;white-space:nowrap">Hapus</button>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
+              <tr class="role-row">
+                <td>{{ $loop->iteration }}</td>
+                <td>{{ $r->role_name }}</td>
+                <td>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <form method="POST" action="{{ route('role.setEdit') }}" style="margin:0">
+                      @csrf
+                      <input type="hidden" name="id" value="{{ $r->id }}">
+                      <button type="submit" class="btn" style="padding:8px 10px;white-space:nowrap">Edit</button>
+                    </form>
+                    <form method="POST" action="{{ route('role.destroy') }}" onsubmit="return confirm('Yakin hapus role ini?');" style="margin:0">
+                      @csrf
+                      @method('DELETE')
+                      <input type="hidden" name="id" value="{{ $r->id }}">
+                      <button type="submit" class="btn" style="padding:8px 10px;background:#fff1f2;color:#991b1b;border-color:#fecdd3;white-space:nowrap">Hapus</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
               @empty
-                <tr id="emptyRole">
-                  <td colspan="3" style="color:var(--text-muted);text-align:center">Belum ada data role.</td>
-                </tr>
+              <tr id="emptyRole">
+                <td colspan="3" style="color:var(--text-muted);text-align:center">Belum ada data role.</td>
+              </tr>
               @endforelse
             </tbody>
           </table>
@@ -302,13 +302,13 @@ const panelJabatan = document.getElementById('panel-jabatan');
 const panelRole = document.getElementById('panel-role');
 
 tabs.forEach(t => t.addEventListener('click', () => {
-  tabs.forEach(x => x.classList.remove('active'));
-  t.classList.add('active');
-  const key = t.getAttribute('data-tab');
-  panelUser.classList.toggle('active', key === 'user');
-  panelBiro.classList.toggle('active', key === 'biro');
-  panelJabatan.classList.toggle('active', key === 'jabatan');
-  panelRole.classList.toggle('active', key === 'role');
+tabs.forEach(x => x.classList.remove('active'));
+t.classList.add('active');
+const key = t.getAttribute('data-tab');
+panelUser.classList.toggle('active', key === 'user');
+panelBiro.classList.toggle('active', key === 'biro');
+panelJabatan.classList.toggle('active', key === 'jabatan');
+panelRole.classList.toggle('active', key === 'role');
 }));
 
 // Search functionality for User
@@ -318,27 +318,27 @@ const noResultsUser = document.getElementById('noResultsUser');
 const emptyUser = document.getElementById('emptyUser');
 
 if (searchUser && userRows.length > 0) {
-  searchUser.addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase().trim();
-    let visibleCount = 0;
+searchUser.addEventListener('input', function() {
+const searchTerm = this.value.toLowerCase().trim();
+let visibleCount = 0;
 
-    userRows.forEach(row => {
-      const text = row.textContent.toLowerCase();
-      if (text.includes(searchTerm)) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
+userRows.forEach(row => {
+const text = row.textContent.toLowerCase();
+if (text.includes(searchTerm)) {
+row.style.display = '';
+visibleCount++;
+} else {
+row.style.display = 'none';
+}
+});
 
-    if (visibleCount === 0) {
-      noResultsUser.style.display = 'block';
-      if (emptyUser) emptyUser.style.display = 'none';
-    } else {
-      noResultsUser.style.display = 'none';
-    }
-  });
+if (visibleCount === 0) {
+noResultsUser.style.display = 'block';
+if (emptyUser) emptyUser.style.display = 'none';
+} else {
+noResultsUser.style.display = 'none';
+}
+});
 }
 
 // Search functionality for Biro
@@ -348,27 +348,27 @@ const noResultsBiro = document.getElementById('noResultsBiro');
 const emptyBiro = document.getElementById('emptyBiro');
 
 if (searchBiro && biroRows.length > 0) {
-  searchBiro.addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase().trim();
-    let visibleCount = 0;
+searchBiro.addEventListener('input', function() {
+const searchTerm = this.value.toLowerCase().trim();
+let visibleCount = 0;
 
-    biroRows.forEach(row => {
-      const text = row.textContent.toLowerCase();
-      if (text.includes(searchTerm)) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
+biroRows.forEach(row => {
+const text = row.textContent.toLowerCase();
+if (text.includes(searchTerm)) {
+row.style.display = '';
+visibleCount++;
+} else {
+row.style.display = 'none';
+}
+});
 
-    if (visibleCount === 0) {
-      noResultsBiro.style.display = 'block';
-      if (emptyBiro) emptyBiro.style.display = 'none';
-    } else {
-      noResultsBiro.style.display = 'none';
-    }
-  });
+if (visibleCount === 0) {
+noResultsBiro.style.display = 'block';
+if (emptyBiro) emptyBiro.style.display = 'none';
+} else {
+noResultsBiro.style.display = 'none';
+}
+});
 }
 
 // Search functionality for Jabatan
@@ -378,27 +378,27 @@ const noResultsJabatan = document.getElementById('noResultsJabatan');
 const emptyJabatan = document.getElementById('emptyJabatan');
 
 if (searchJabatan && jabatanRows.length > 0) {
-  searchJabatan.addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase().trim();
-    let visibleCount = 0;
+searchJabatan.addEventListener('input', function() {
+const searchTerm = this.value.toLowerCase().trim();
+let visibleCount = 0;
 
-    jabatanRows.forEach(row => {
-      const text = row.textContent.toLowerCase();
-      if (text.includes(searchTerm)) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
+jabatanRows.forEach(row => {
+const text = row.textContent.toLowerCase();
+if (text.includes(searchTerm)) {
+row.style.display = '';
+visibleCount++;
+} else {
+row.style.display = 'none';
+}
+});
 
-    if (visibleCount === 0) {
-      noResultsJabatan.style.display = 'block';
-      if (emptyJabatan) emptyJabatan.style.display = 'none';
-    } else {
-      noResultsJabatan.style.display = 'none';
-    }
-  });
+if (visibleCount === 0) {
+noResultsJabatan.style.display = 'block';
+if (emptyJabatan) emptyJabatan.style.display = 'none';
+} else {
+noResultsJabatan.style.display = 'none';
+}
+});
 }
 
 // Search functionality for Role
@@ -408,26 +408,26 @@ const noResultsRole = document.getElementById('noResultsRole');
 const emptyRole = document.getElementById('emptyRole');
 
 if (searchRole && roleRows.length > 0) {
-  searchRole.addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase().trim();
-    let visibleCount = 0;
+searchRole.addEventListener('input', function() {
+const searchTerm = this.value.toLowerCase().trim();
+let visibleCount = 0;
 
-    roleRows.forEach(row => {
-      const text = row.textContent.toLowerCase();
-      if (text.includes(searchTerm)) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
+roleRows.forEach(row => {
+const text = row.textContent.toLowerCase();
+if (text.includes(searchTerm)) {
+row.style.display = '';
+visibleCount++;
+} else {
+row.style.display = 'none';
+}
+});
 
-    if (visibleCount === 0) {
-      noResultsRole.style.display = 'block';
-      if (emptyRole) emptyRole.style.display = 'none';
-    } else {
-      noResultsRole.style.display = 'none';
-    }
-  });
+if (visibleCount === 0) {
+noResultsRole.style.display = 'block';
+if (emptyRole) emptyRole.style.display = 'none';
+} else {
+noResultsRole.style.display = 'none';
+}
+});
 }
 @endsection

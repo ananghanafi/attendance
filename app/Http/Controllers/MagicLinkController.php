@@ -31,23 +31,12 @@ class MagicLinkController extends Controller
                 ->withErrors(['magic_link' => 'Link sudah kedaluwarsa. Silakan hubungi admin untuk link baru.']);
         }
 
-        // cek token is_used
-        if ($magicToken->is_used) {
-            return redirect()->route('login')
-                ->withErrors(['magic_link' => 'Link sudah digunakan. Pengajuan WFO sudah disimpan sebelumnya.']);
-        }
-
         // Ambil user
         $user = User::find($magicToken->user_id);
         if (!$user) {
             return redirect()->route('login')
                 ->withErrors(['magic_link' => 'User tidak ditemukan.']);
         }
-
-        // Login user
-        Auth::login($user);
-
-        request()->session()->regenerate();
 
         // Ambil biro_id user untuk redirect ke pengajuan edit yang sesuai
         $biroId = $user->biro_id;
@@ -65,7 +54,26 @@ class MagicLinkController extends Controller
                 ->with('warning', 'Data pengajuan WFO untuk periode ini tidak ditemukan.');
         }
 
-        // set token untuk expired setelah digunakan
+        // Cek apakah pengajuan sudah final (sudah di-save permanen)
+        if (strtolower($pengajuan->status ?? '') === 'final') {
+            // Token sudah dipakai dan pengajuan sudah final - hanya bisa view
+            if ($magicToken->is_used) {
+                // Login user untuk view
+                Auth::login($user);
+                request()->session()->regenerate();
+                
+                session(['pengajuan_id' => $pengajuan->id]);
+                
+                return redirect()->route('pengajuan.show')
+                    ->with('info', 'Pengajuan WFO sudah disimpan permanen. Anda hanya dapat melihat data.');
+            }
+        }
+
+        // Login user
+        Auth::login($user);
+        request()->session()->regenerate();
+
+        // set session untuk edit
         session([
             'pengajuan_id' => $pengajuan->id,
             'magic_token_id' => $magicToken->id,

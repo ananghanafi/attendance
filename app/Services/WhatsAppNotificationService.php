@@ -52,7 +52,6 @@ class WhatsAppNotificationService
                 $kalenderString
             );
 
-            // Buat magic link dengan format /pengajuan-wfo/{token}
             $magicLink = url('/pengajuan-wfo/' . $magicToken->raw_token);
 
             // Ambil nama biro
@@ -61,7 +60,7 @@ class WhatsAppNotificationService
                 ->value('biro_name') ?? 'Unknown';
 
             // Render template pesan
-            $message = view('template-wa-pengajuan-wfo', [
+            $message = view('templates.wa.pengajuan-wfo', [
                 'nama' => $user->nama ?? 'User',
                 'biro' => $biro,
                 'minggu' => $minggu,
@@ -291,7 +290,7 @@ class WhatsAppNotificationService
             $magicLink = url('/pengajuan-wfo/' . $magicToken->raw_token);
 
             // Render template pesan
-            $message = view('template-wa-pengajuan-wfo', [
+            $message = view('templates.wa.pengajuan-wfo', [
                 'nama' => $user->nama ?? 'User',
                 'biro' => $biroName,
                 'minggu' => $minggu,
@@ -318,5 +317,201 @@ class WhatsAppNotificationService
         Log::info("Broadcast sent to {$biroName}: " . count($recipients) . " users");
 
         return count($recipients) > 0;
+    }
+
+    /**
+     * Kirim notifikasi approval izin ke atasan
+     *
+     * @param array $data Data izin
+     * @param string $token Token approval
+     * @return array Hasil pengiriman
+     */
+    public function sendApprovalIzinToAtasan(array $data): array
+    {
+        // Ambil data atasan
+        $atasan = DB::table('users')
+            ->where('nip', $data['nip_atasan'])
+            ->first();
+
+        if (!$atasan || empty($atasan->telp)) {
+            return [
+                'success' => false,
+                'message' => 'Atasan tidak ditemukan atau tidak punya nomor telepon.',
+            ];
+        }
+
+        // Render template pesan dari blade
+        $message = view('templates.wa.approval-izin', [
+            'status' => $data['status'],
+            'nama_pengaju' => $data['nama_pengaju'],
+            'from' => $data['from'],
+            'to' => $data['to'],
+            'alasan' => $data['alasan'],
+            'expired_date' => date('d-m-Y', strtotime($data['expired_at'])),
+            'approval_link' => url('/absen/approval/' . $data['token']),
+        ])->render();
+
+        $phoneNumber = $this->formatPhoneNumber($atasan->telp);
+
+        $recipients = [[
+            'number' => $phoneNumber,
+            'message' => $message,
+            'isMedia' => false,
+            'typeMedia' => 'text',
+            'urlMedia' => '',
+        ]];
+
+        $response = $this->sendToWhatsAppApi($recipients);
+
+        return [
+            'success' => true,
+            'message' => 'Notifikasi approval izin berhasil dikirim ke atasan.',
+            'response' => $response,
+        ];
+    }
+
+    /**
+     * Kirim notifikasi approval absen pulang telat ke atasan
+     *
+     * @param array $data Data absen pulang
+     * @return array Hasil pengiriman
+     */
+    public function sendApprovalPulangToAtasan(array $data): array
+    {
+        // Ambil data atasan
+        $atasan = DB::table('users')
+            ->where('nip', $data['nip_atasan'])
+            ->first();
+
+        if (!$atasan || empty($atasan->telp)) {
+            return [
+                'success' => false,
+                'message' => 'Atasan tidak ditemukan atau tidak punya nomor telepon.',
+            ];
+        }
+
+        // Render template pesan dari blade
+        $message = view('templates.wa.approval-pulang', [
+            'nama_atasan' => $atasan->nama ?? 'ATASAN',
+            'nama_pengaju' => $data['nama_pengaju'],
+            'alasan' => $data['alasan'],
+            'expired_date' => date('d-m-Y', strtotime($data['expired_at'])),
+            'approval_link' => url('/absen/approval/' . $data['token']),
+        ])->render();
+
+        $phoneNumber = $this->formatPhoneNumber($atasan->telp);
+
+        $recipients = [[
+            'number' => $phoneNumber,
+            'message' => $message,
+            'isMedia' => false,
+            'typeMedia' => 'text',
+            'urlMedia' => '',
+        ]];
+
+        $response = $this->sendToWhatsAppApi($recipients);
+
+        return [
+            'success' => true,
+            'message' => 'Notifikasi approval absen pulang berhasil dikirim ke atasan.',
+            'response' => $response,
+        ];
+    }
+
+    /**
+     * Kirim notifikasi hasil approval izin ke user
+     *
+     * @param array $data Data hasil approval
+     * @return array Hasil pengiriman
+     */
+    public function sendApprovalResultIzinToUser(array $data): array
+    {
+        // Ambil data user
+        $user = DB::table('users')
+            ->where('nip', $data['nip_user'])
+            ->first();
+
+        if (!$user || empty($user->telp)) {
+            return [
+                'success' => false,
+                'message' => 'User tidak ditemukan atau tidak punya nomor telepon.',
+            ];
+        }
+
+        // Render template pesan dari blade
+        $message = view('templates.wa.result-izin', [
+            'nama_user' => $data['nama_user'],
+            'status' => $data['status'],
+            'from' => $data['from'],
+            'to' => $data['to'],
+            'alasan' => $data['alasan'],
+            'result' => $data['result'],
+            'processed_by' => $data['processed_by'],
+        ])->render();
+
+        $phoneNumber = $this->formatPhoneNumber($user->telp);
+
+        $recipients = [[
+            'number' => $phoneNumber,
+            'message' => $message,
+            'isMedia' => false,
+            'typeMedia' => 'text',
+            'urlMedia' => '',
+        ]];
+
+        $response = $this->sendToWhatsAppApi($recipients);
+
+        return [
+            'success' => true,
+            'message' => 'Notifikasi hasil approval izin berhasil dikirim ke user.',
+            'response' => $response,
+        ];
+    }
+
+    /**
+     * Kirim notifikasi hasil approval absen pulang telat ke user
+     *
+     * @param array $data Data hasil approval
+     * @return array Hasil pengiriman
+     */
+    public function sendApprovalResultPulangToUser(array $data): array
+    {
+        // Ambil data user
+        $user = DB::table('users')
+            ->where('nip', $data['nip_user'])
+            ->first();
+
+        if (!$user || empty($user->telp)) {
+            return [
+                'success' => false,
+                'message' => 'User tidak ditemukan atau tidak punya nomor telepon.',
+            ];
+        }
+
+        // Render template pesan dari blade
+        $message = view('templates.wa.result-pulang', [
+            'nama_user' => $data['nama_user'],
+            'alasan' => $data['alasan'],
+            'result' => $data['result'],
+            'processed_by' => $data['processed_by'],
+        ])->render();
+
+        $phoneNumber = $this->formatPhoneNumber($user->telp);
+
+        $recipients = [[
+            'number' => $phoneNumber,
+            'message' => $message,
+            'isMedia' => false,
+            'typeMedia' => 'text',
+            'urlMedia' => '',
+        ]];
+
+        $response = $this->sendToWhatsAppApi($recipients);
+
+        return [
+            'success' => true,
+            'message' => 'Notifikasi hasil approval absen pulang berhasil dikirim ke user.',
+            'response' => $response,
+        ];
     }
 }
