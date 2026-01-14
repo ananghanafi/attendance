@@ -25,6 +25,16 @@ Route::get('/pengajuan-wfo/{token}', [MagicLinkController::class, 'login'])->nam
 Route::get('/absen/approval/{token}', [ApprovalController::class, 'show'])->name('absen.approval.show');
 Route::post('/absen/approval/{token}', [ApprovalController::class, 'process'])->name('absen.approval.process');
 
+// Absen untuk orang lain (tanpa auth) - format tanggal: dd-mm-yyyy
+// Route dengan parameter catch-all - redirect ke tanggal hari ini jika format salah
+Route::get('/absensi/mywgabsen/{nip}/{tanggal?}', [AbsenController::class, 'absenOtomatis'])
+    ->where('tanggal', '.*')
+    ->name('absen.otomatis');
+Route::get('/absensi/form-harian/{nip}/{tanggal?}', [AbsenController::class, 'absenFormStandalone'])
+    ->where('tanggal', '.*')
+    ->name('absen.form.standalone');
+Route::post('/absensi/form-harian/{nip}/{tanggal}', [AbsenController::class, 'storeAbsenStandalone'])->name('absen.store.standalone');
+
 // Auth (username-based)
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');

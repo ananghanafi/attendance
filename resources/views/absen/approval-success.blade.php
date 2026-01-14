@@ -140,7 +140,18 @@
             @if($type === 'izin')
             <div class="info-row">
                 <span class="label">Jenis</span>
-                <span class="value">{{ ucfirst($data['status'] ?? 'Izin') }}</span>
+                <span class="value">
+                    @php
+                    $statusLabel = match($data['status'] ?? '') {
+                        'sakit_izin' => 'Sakit/Izin',
+                        'izin' => 'Sakit/Izin',
+                        'dinas' => 'Dinas',
+                        'wfa' => 'WFA',
+                        default => ucfirst($data['status'] ?? 'Izin')
+                    };
+                    @endphp
+                    {{ $statusLabel }}
+                </span>
             </div>
             <div class="info-row">
                 <span class="label">Tanggal</span>

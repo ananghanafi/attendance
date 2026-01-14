@@ -1,6 +1,15 @@
 [ABSEN ONLINE]
 
-Terdapat pengajuan Izin *{{ strtoupper($status) }}* dari Pegawai atas nama *{{ strtoupper($nama_pengaju) }}* untuk tanggal *{{ $from }}* sd *{{ $to }}* dengan alasan sebagai berikut.
+@php
+$statusLabel = match($status) {
+    'sakit_izin' => 'Sakit/Izin',
+    'izin' => 'Sakit/Izin',
+    'dinas' => 'Dinas',
+    'wfa' => 'WFA',
+    default => ucfirst($status)
+};
+@endphp
+Terdapat pengajuan Izin *{{ strtoupper($statusLabel) }}* dari Pegawai atas nama *{{ strtoupper($nama_pengaju) }}* untuk tanggal *{{ $from }}* sd *{{ $to }}* dengan alasan sebagai berikut.
 
 *{{ $alasan }}*
 

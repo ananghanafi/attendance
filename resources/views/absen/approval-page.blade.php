@@ -203,11 +203,15 @@
                     $statusClass = [
                     'dinas' => 'status-dinas',
                     'sakit' => 'status-sakit',
+                    'sakit_izin' => 'status-sakit',
+                    'izin' => 'status-sakit',
                     'wfa' => 'status-wfa',
                     ][$data['status']] ?? 'status-dinas';
                     $statusLabel = [
                     'dinas' => 'Dinas',
                     'sakit' => 'Sakit',
+                    'sakit_izin' => 'Sakit/Izin',
+                    'izin' => 'Sakit/Izin',
                     'wfa' => 'WFA',
                     ][$data['status']] ?? ucfirst($data['status']);
                     @endphp

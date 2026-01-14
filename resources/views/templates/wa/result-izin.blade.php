@@ -3,7 +3,16 @@
 Kepada Yth.
 *{{ strtoupper($nama_user) }}*
 
-Pengajuan Izin *{{ strtoupper($status) }}* untuk tanggal *{{ $from }}* sd *{{ $to }}* dengan alasan *{{ $alasan }}* telah *{{ $result === 'approved' ? 'DISETUJUI' : 'DITOLAK' }}* oleh *{{ strtoupper($processed_by) }}*.
+@php
+$statusLabel = match($status) {
+    'sakit_izin' => 'Sakit/Izin',
+    'izin' => 'Sakit/Izin',
+    'dinas' => 'Dinas',
+    'wfa' => 'WFA',
+    default => ucfirst($status)
+};
+@endphp
+Pengajuan Izin *{{ strtoupper($statusLabel) }}* untuk tanggal *{{ $from }}* sd *{{ $to }}* dengan alasan *{{ $alasan }}* telah *{{ $result === 'approved' ? 'DISETUJUI' : 'DITOLAK' }}* oleh *{{ strtoupper($processed_by) }}*.
 
 @if($result === 'approved')
 Silakan melanjutkan aktivitas sesuai dengan izin yang telah diajukan.
