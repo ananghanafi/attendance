@@ -56,13 +56,13 @@ class AdminKalenderKerjaController extends Controller
         $this->ensureAdmin();
 
         $data = $request->validate([
-            'minggu' => ['required','integer','min:1','max:6'],
-            'tipe_persentase' => ['required','in:wfo,wfa'],
-            'nilai_persentase' => ['required','numeric','min:0','max:100'],
-            'bulan' => ['required','integer','min:1','max:12'],
-            'tahun' => ['required','integer','min:2000','max:2100'],
-            'tgl_awal' => ['required','date'],
-            'tgl_akhir' => ['required','date','after_or_equal:tgl_awal'],
+            'minggu' => ['required', 'integer', 'min:1', 'max:6'],
+            'tipe_persentase' => ['required', 'in:wfo,wfa'],
+            'nilai_persentase' => ['required', 'numeric', 'min:0', 'max:100'],
+            'bulan' => ['required', 'integer', 'min:1', 'max:12'],
+            'tahun' => ['required', 'integer', 'min:2000', 'max:2100'],
+            'tgl_awal' => ['required', 'date'],
+            'tgl_akhir' => ['required', 'date', 'after_or_equal:tgl_awal'],
         ], [
             'minggu.required' => 'Minggu harus diisi.',
             'minggu.integer' => 'Minggu harus berupa angka.',
@@ -172,23 +172,23 @@ class AdminKalenderKerjaController extends Controller
                 $prevMonth = 12;
                 $prevYear--;
             }
-            
+
             $oldKalender = sprintf('1-%d-%d', $prevMonth, $prevYear);
-            
+
             // Delete pengajuan detail
             DB::table('pengajuan_wao_detail')
-                ->whereIn('pengajuan_id', function($query) use ($oldKalender) {
+                ->whereIn('pengajuan_id', function ($query) use ($oldKalender) {
                     $query->select('id')
                         ->from('pengajuan_wao')
                         ->where('kalender', $oldKalender);
                 })
                 ->delete();
-            
+
             // Delete pengajuan master
             DB::table('pengajuan_wao')
                 ->where('kalender', $oldKalender)
                 ->delete();
-            
+
             // Optionally delete old kalender_kerja_v2 too
             DB::table('kalender_kerja_v2')
                 ->where('kalender', $oldKalender)
@@ -259,13 +259,13 @@ class AdminKalenderKerjaController extends Controller
         $row = KalenderKerjaV2::query()->findOrFail($id);
 
         $data = $request->validate([
-            'minggu' => ['required','integer','min:1','max:6'],
-            'tipe_persentase' => ['required','in:wfo,wfa'],
-            'nilai_persentase' => ['required','numeric','min:0','max:100'],
-            'bulan' => ['required','integer','min:1','max:12'],
-            'tahun' => ['required','integer','min:2000','max:2100'],
-            'tgl_awal' => ['required','date'],
-            'tgl_akhir' => ['required','date','after_or_equal:tgl_awal'],
+            'minggu' => ['required', 'integer', 'min:1', 'max:6'],
+            'tipe_persentase' => ['required', 'in:wfo,wfa'],
+            'nilai_persentase' => ['required', 'numeric', 'min:0', 'max:100'],
+            'bulan' => ['required', 'integer', 'min:1', 'max:12'],
+            'tahun' => ['required', 'integer', 'min:2000', 'max:2100'],
+            'tgl_awal' => ['required', 'date'],
+            'tgl_akhir' => ['required', 'date', 'after_or_equal:tgl_awal'],
         ], [
             'minggu.required' => 'Minggu harus diisi.',
             'minggu.integer' => 'Minggu harus berupa angka.',
@@ -337,14 +337,14 @@ class AdminKalenderKerjaController extends Controller
     public function setDelete(Request $request)
     {
         $this->ensureAdmin();
-        
+
         $id = $request->input('id');
         if (!$id) {
             return redirect()->route('admin.kalender')->with('error', 'Silakan pilih kalender dari daftar');
         }
-        
+
         session(['kalender_delete_id' => $id]);
-        
+
         // Langsung panggil destroy
         return $this->destroy();
     }
@@ -359,30 +359,30 @@ class AdminKalenderKerjaController extends Controller
         }
 
         $row = KalenderKerjaV2::query()->findOrFail($id);
-        
+
         // Get kalender string untuk delete pengajuan
         $kalenderString = $row->kalender;
-        
+
         DB::table('pengajuan_wao_detail_tanggal')
-            ->whereIn('pengajuan_id', function($query) use ($kalenderString) {
+            ->whereIn('pengajuan_id', function ($query) use ($kalenderString) {
                 $query->select('id')
                     ->from('pengajuan_wao')
                     ->where('kalender', $kalenderString);
             })
             ->delete();
-        
+
         DB::table('pengajuan_wao_detail')
-            ->whereIn('pengajuan_id', function($query) use ($kalenderString) {
+            ->whereIn('pengajuan_id', function ($query) use ($kalenderString) {
                 $query->select('id')
                     ->from('pengajuan_wao')
                     ->where('kalender', $kalenderString);
             })
             ->delete();
-        
+
         DB::table('pengajuan_wao')
             ->where('kalender', $kalenderString)
             ->delete();
-        
+
         $row->delete();
 
         session()->forget('kalender_delete_id');
@@ -395,7 +395,7 @@ class AdminKalenderKerjaController extends Controller
     // =====================
     // KALENDER LIBUR
     // =====================
-    
+
     public function liburIndex()
     {
         $this->ensureAdmin();

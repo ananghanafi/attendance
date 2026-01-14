@@ -529,7 +529,7 @@ class PengajuanWfoController extends Controller
         return view('admin.pengajuan.show', [
             'pengajuan' => $pengajuan,
             'details' => $details,
-            'readOnly' => false, // Edit mode - radio buttons enabled
+            'readOnly' => false,
             'hariLibur' => $hariLibur, // Array hari yang libur: ['senin' => true, 'selasa' => false, ...]
             'isAdminOrVP' => $this->isAdminOrVP(),
         ]);
@@ -713,10 +713,10 @@ class PengajuanWfoController extends Controller
             // Response berbeda untuk draft vs final
             if ($isFinal) {
                 // Redirect ke view mode (bukan edit mode) setelah simpan permanen
-                return redirect()->route('pengajuan.show')->with('success', 'Pengajuan berhasil disimpan permanen.');
+                return redirect()->route('pengajuan.show')->with('success', 'Pengajuan berhasil disimpan.');
             } else {
                 // Untuk draft/auto-save, tetap di halaman edit
-                return redirect()->route('pengajuan.edit')->with('success', 'Progress berhasil disimpan. Anda masih bisa mengedit sampai klik "Simpan Permanen".');
+                return redirect()->route('pengajuan.edit')->with('success', 'Progress berhasil disimpan sementara. Anda masih bisa mengedit sampai "Simpan Permanen".');
             }
         } catch (\Exception $e) {
             DB::rollBack();

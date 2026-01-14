@@ -159,7 +159,7 @@
 
         <p class="close-note">
             <i class="bi bi-info-circle me-1"></i>
-            Jika Anda memerlukan bantuan, silakan hubungi Admin atau HR.
+            Jika Anda memerlukan bantuan, silakan hubungi Admin atau VP.
         </p>
     </div>
 </body>
