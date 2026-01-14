@@ -109,7 +109,7 @@
         @if($reason === 'expired')
         <h2 class="error-title">Link Kadaluarsa</h2>
         <p class="error-message">
-            Link approval ini sudah melewati batas waktu yang ditentukan (23:59).
+            Link approval ini sudah melewati batas waktu yang ditentukan.
             Pengajuan telah ditolak secara otomatis oleh sistem.
         </p>
         @elseif($reason === 'processed')

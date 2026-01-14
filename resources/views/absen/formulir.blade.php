@@ -396,7 +396,7 @@
     <div class="icon">⚠️</div>
     <div class="text">
         <h4>Absen Pulang Perlu Persetujuan</h4>
-        <p>Anda terjadwal WFO tetapi saat ini berada di luar kantor. Absen pulang akan masuk ke daftar pending dan memerlukan persetujuan atasan.</p>
+        <p>Anda terjadwal WFO tetapi saat ini berada di luar kantor. Absen pulang akan masuk ke daftar pending dan memerlukan persetujuan.</p>
     </div>
 </div>
 
@@ -637,7 +637,7 @@
                         name="wfa_detail"
                         id="wfa_detail"
                         class="form-input"
-                        placeholder="Contoh: Cafe XYZ, Coworking Space ABC, dll"
+                        placeholder="Contoh: Cafe, Coworking, dll"
                         value="{{ old('wfa_detail') }}">
                     <p class="form-hint">Sebutkan lokasi spesifik Anda bekerja.</p>
                     @error('wfa_detail')

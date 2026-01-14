@@ -176,7 +176,7 @@
 
         <p class="close-note">
             <i class="bi bi-info-circle me-1"></i>
-            Notifikasi hasil telah dikirim ke pengaju via WhatsApp.<br>
+            Notifikasi hasil telah dikirim ke pengaju.<br>
             Anda dapat menutup halaman ini.
         </p>
     </div>

@@ -283,7 +283,7 @@ class AbsenController extends Controller
             $absenData = [
                 'scan_masuk' => $jamSekarang,
                 'scan_masuk_awal' => $jamSekarang,
-                'status_izin' => 'wfa',
+                'status_izin' => 'wfh',
                 'wfa' => (int) $request->wfa_lokasi,
                 'wfa_detail' => $request->wfa_lokasi === '2' ? $request->wfa_detail : null,
                 'wfa_alasan' => $request->wfa_alasan,
@@ -433,7 +433,7 @@ class AbsenController extends Controller
                 }
 
                 return redirect()->route('absen.index')
-                    ->with('success', 'Absen pulang telah diajukan pada jam ' . $jamSekarang . '. Notifikasi approval telah dikirim ke atasan.');
+                    ->with('success', 'Absen pulang telah diajukan pada jam ' . $jamSekarang . '. Notifikasi approval telah dikirim.');
             } else {
                 // WFA atau WFO di kantor -> langsung ke scan_pulang
                 DB::table('absen')
@@ -450,114 +450,6 @@ class AbsenController extends Controller
             return redirect()->back()
                 ->with('error', 'Gagal menyimpan absen pulang: ' . $e->getMessage())
                 ->withInput();
-        }
-    }
-
-    /**
-     * Halaman approval absen untuk atasan
-     */
-    public function approvalIndex()
-    {
-        $user = Auth::user();
-
-        // Cari pegawai yang nip_atasannya adalah user ini
-        $pendingApprovals = DB::table('absen as a')
-            ->join('users as u', 'a.nip', '=', 'u.nip')
-            ->whereNotNull('a.jam_temp')
-            ->whereNull('a.scan_pulang')
-            ->where('u.nip_atasan', $user->nip)
-            ->select(
-                'a.*',
-                'u.nama',
-                'u.nip as user_nip'
-            )
-            ->orderBy('a.tanggal', 'desc')
-            ->get();
-
-        return view('absen.approval', [
-            'user' => $user,
-            'pendingApprovals' => $pendingApprovals,
-        ]);
-    }
-
-    /**
-     * Approve absen pulang
-     */
-    public function approve(Request $request, $id)
-    {
-        $user = Auth::user();
-
-        // Cek apakah absen ini memang bawahan user
-        $absen = DB::table('absen as a')
-            ->join('users as u', 'a.nip', '=', 'u.nip')
-            ->where('a.id', $id)
-            ->where('u.nip_atasan', $user->nip)
-            ->select('a.*')
-            ->first();
-
-        if (!$absen) {
-            return redirect()->route('absen.approval')
-                ->with('error', 'Data tidak ditemukan atau Anda tidak berhak menyetujui');
-        }
-
-        if (!$absen->jam_temp || $absen->scan_pulang) {
-            return redirect()->route('absen.approval')
-                ->with('error', 'Data sudah diproses sebelumnya');
-        }
-
-        try {
-            // Pindahkan jam_temp ke scan_pulang
-            DB::table('absen')
-                ->where('id', $id)
-                ->update([
-                    'scan_pulang' => $absen->jam_temp,
-                    'jam_temp' => null,
-                    'approved_date' => now(),
-                    'is_confirm' => true,
-                ]);
-
-            return redirect()->route('absen.approval')
-                ->with('success', 'Absen pulang berhasil disetujui');
-        } catch (\Exception $e) {
-            return redirect()->route('absen.approval')
-                ->with('error', 'Gagal menyetujui: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Reject absen pulang
-     */
-    public function reject(Request $request, $id)
-    {
-        $user = Auth::user();
-
-        // Cek apakah absen ini memang bawahan user
-        $absen = DB::table('absen as a')
-            ->join('users as u', 'a.nip', '=', 'u.nip')
-            ->where('a.id', $id)
-            ->where('u.nip_atasan', $user->nip)
-            ->select('a.*')
-            ->first();
-
-        if (!$absen) {
-            return redirect()->route('absen.approval')
-                ->with('error', 'Data tidak ditemukan atau Anda tidak berhak menolak');
-        }
-
-        try {
-            // Hapus jam_temp (ditolak)
-            DB::table('absen')
-                ->where('id', $id)
-                ->update([
-                    'jam_temp' => null,
-                    'alasan_pulang' => null,
-                ]);
-
-            return redirect()->route('absen.approval')
-                ->with('success', 'Absen pulang berhasil ditolak');
-        } catch (\Exception $e) {
-            return redirect()->route('absen.approval')
-                ->with('error', 'Gagal menolak: ' . $e->getMessage());
         }
     }
 
