@@ -33,7 +33,7 @@
         .topbar {
             position: fixed;
             top: 0;
-            left: 0;
+            left: var(--sidebar-collapsed);
             right: 0;
             height: var(--topbar-height);
             background: var(--primary);
@@ -43,16 +43,46 @@
             justify-content: space-between;
             padding: 0 32px;
             box-shadow: 0 4px 12px rgba(89, 102, 247, 0.15);
-            z-index: 100
+            z-index: 100;
+            transition: left 0.3s ease
+        }
+
+        .topbar.sidebar-expanded {
+            left: var(--sidebar-width)
         }
 
         .topbar .brand {
-            font-size: 14px;
-            font-weight: 500;
-            letter-spacing: 0.02em;
+            display: flex;
+            align-items: center
+        }
+
+        .sidebar-brand {
+            height: var(--topbar-height);
             display: flex;
             align-items: center;
-            gap: 16px
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: 0.02em;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 10px
+        }
+
+        .sidebar-brand .brand-full {
+            display: block
+        }
+
+        .sidebar-brand .brand-short {
+            display: none
+        }
+
+        .sidebar.collapsed .sidebar-brand .brand-full {
+            display: none
+        }
+
+        .sidebar.collapsed .sidebar-brand .brand-short {
+            display: block
         }
 
         .hamburger {
@@ -221,15 +251,15 @@
 
         .sidebar {
             position: fixed;
-            top: var(--topbar-height);
+            top: 0;
             left: 0;
             width: var(--sidebar-width);
-            height: calc(100vh - var(--topbar-height));
+            height: 100vh;
             background: #fff;
             box-shadow: 2px 0 12px rgba(0, 0, 0, 0.05);
             overflow-y: auto;
             overflow-x: hidden;
-            z-index: 50;
+            z-index: 150;
             transition: width 0.3s ease, transform 0.3s ease
         }
 
@@ -290,20 +320,25 @@
         }
 
         .main {
-            margin-left: var(--sidebar-width);
+            margin-left: var(--sidebar-collapsed);
             margin-top: var(--topbar-height);
             padding: 32px;
             min-height: calc(100vh - var(--topbar-height));
             transition: margin-left 0.3s ease
         }
 
-        .main.sidebar-collapsed {
-            margin-left: var(--sidebar-collapsed)
+        .main.sidebar-expanded {
+            margin-left: var(--sidebar-width)
         }
 
         @media(max-width:900px) {
             .topbar {
+                left: 0;
                 padding: 0 16px
+            }
+
+            .topbar.sidebar-expanded {
+                left: 0
             }
 
             .topbar .brand {
@@ -338,7 +373,7 @@
                 padding: 20px
             }
 
-            .main.sidebar-collapsed {
+            .main.sidebar-expanded {
                 margin-left: 0
             }
         }
@@ -348,10 +383,9 @@
 </head>
 
 <body>
-    <div class="topbar">
+    <div class="topbar" id="topbar">
         <div class="brand">
             <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
-            <span>WIKAGEDUNG</span>
         </div>
         <div class="right">
             <div class="profile" id="profileMenu" onclick="toggleProfile()">
@@ -373,16 +407,19 @@
             </div>
         </div>
     </div>
-    <div class="sidebar" id="sidebar">
+    <div class="sidebar collapsed" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-full">WIKAGEDUNG</span>
+            <span class="brand-short">WG</span>
+        </div>
         <div class="sidebar-menu">
             <a href="{{ route("dashboard") }}" class="sidebar-item @if(request()->routeIs(" dashboard")) active @endif"><span class="icon">🏠</span><span class="text">Dashboard</span></a>
-            <a href="{{ route("absen.index") }}" class="sidebar-item @if(request()->routeIs(" absen.index") || request()->routeIs("absen.formulir")) active @endif"><span class="icon">⏰</span><span class="text">Absen</span></a>
+            @if($canAccessKalender ?? false)
+            <a href="{{ route("admin.kalender") }}" class="sidebar-item @if(request()->routeIs(" admin.kalender*") || request()->routeIs("kalender.*")) active @endif"><span class="icon">📅</span><span class="text">Kalender Kerja</span></a>
+            @endif
             <a href="{{ route("pengajuan.index") }}" class="sidebar-item @if(request()->routeIs(" pengajuan.*")) active @endif"><span class="icon">📋</span><span class="text">Pengajuan WFO</span></a>
             @if($canAccessReport ?? false)
             <a href="{{ route("report.index") }}" class="sidebar-item @if(request()->routeIs("report.*")) active @endif"><span class="icon">📊</span><span class="text">Report Absensi</span></a>
-            @endif
-            @if($canAccessKalender ?? false)
-            <a href="{{ route("admin.kalender") }}" class="sidebar-item @if(request()->routeIs(" admin.kalender*") || request()->routeIs("kalender.*")) active @endif"><span class="icon">📅</span><span class="text">Kalender Kerja</span></a>
             @endif
             @if($canAccessSettings ?? false)
             <a href="{{ route("settings.index") }}" class="sidebar-item @if(request()->routeIs(" settings.*") || request()->routeIs("users.*") || request()->routeIs("biro.*") || request()->routeIs("jabatan.*") || request()->routeIs("role.*")) active @endif"><span class="icon">⚙️</span><span class="text">Setting User</span></a>
@@ -408,6 +445,7 @@
         function toggleSidebar() {
             const s = document.getElementById("sidebar");
             const m = document.getElementById("mainContent");
+            const t = document.getElementById("topbar");
             const h = document.querySelector(".hamburger");
             const isMobile = window.innerWidth <= 900;
             if (isMobile) {
@@ -419,24 +457,29 @@
                 }
             } else {
                 s.classList.toggle("collapsed");
-                m.classList.toggle("sidebar-collapsed");
                 if (s.classList.contains("collapsed")) {
-                    h.classList.remove("active")
+                    h.classList.remove("active");
+                    m.classList.remove("sidebar-expanded");
+                    t.classList.remove("sidebar-expanded")
                 } else {
-                    h.classList.add("active")
+                    h.classList.add("active");
+                    m.classList.add("sidebar-expanded");
+                    t.classList.add("sidebar-expanded")
                 }
             }
         }
         window.addEventListener("resize", function() {
             const s = document.getElementById("sidebar");
             const m = document.getElementById("mainContent");
+            const t = document.getElementById("topbar");
             const h = document.querySelector(".hamburger");
             if (window.innerWidth > 900) {
                 s.classList.remove("open");
                 h.classList.remove("active")
             } else {
                 s.classList.remove("collapsed");
-                m.classList.remove("sidebar-collapsed");
+                m.classList.remove("sidebar-expanded");
+                t.classList.remove("sidebar-expanded");
                 h.classList.remove("active")
             }
         });

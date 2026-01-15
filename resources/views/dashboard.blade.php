@@ -89,6 +89,14 @@
 </div>
 
 <div class="grid">
+  {{-- Kalender Kerja - Admin & HC --}}
+  @if($canAccessKalender ?? false)
+  <a class="tile" href="{{ route('admin.kalender') }}">
+    <div class="t">📅 Kalender Kerja</div>
+    <div class="d">Input periode (minggu Senin–Minggu) dan lihat data kalender kerja.</div>
+  </a>
+  @endif
+
   {{-- Pengajuan WFO - tampil untuk semua --}}
   <a class="tile" href="{{ route('pengajuan.index') }}">
     <div class="t">📋 Pengajuan WFO</div>
@@ -109,14 +117,6 @@
   </a>
   @endif
 
-  {{-- Kalender Kerja - Admin & HC --}}
-  @if($canAccessKalender ?? false)
-  <a class="tile" href="{{ route('admin.kalender') }}">
-    <div class="t">📅 Kalender Kerja</div>
-    <div class="d">Input periode (minggu Senin–Minggu) dan lihat data kalender kerja.</div>
-  </a>
-  @endif
-
   {{-- Setting User - Admin only --}}
   @if($canAccessSettings ?? false)
   <a class="tile" href="{{ route('settings.index') }}">
@@ -124,11 +124,5 @@
     <div class="d">Kelola user, biro, jabatan, dan role dalam satu tempat.</div>
   </a>
   @endif
-
-  {{-- Absen - tampil untuk semua user --}}
-  <a class="tile" href="{{ route('absen.index') }}">
-    <div class="t">⏰ Absen</div>
-    <div class="d">Lakukan absen masuk dan absen pulang harian.</div>
-  </a>
 </div>
 @endsection
