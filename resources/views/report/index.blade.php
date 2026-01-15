@@ -514,8 +514,8 @@
                     <label class="filter-label">Tanggal Sampai</label>
                     <input type="date" id="filterDateTo" class="filter-input">
                 </div>
-                <div class="filter-group">
-                    <button type="submit" class="btn primary" style="margin-top: auto;">
+                <div style="display: flex; align-items: end;">
+                    <button type="submit" class="btn primary">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="11" cy="11" r="8"/>
                             <path d="m21 21-4.35-4.35"/>
