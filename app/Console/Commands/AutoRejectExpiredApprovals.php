@@ -67,8 +67,9 @@ class AutoRejectExpiredApprovals extends Command
                         DB::table('formulir_izin')
                             ->where('id', $token->reference_id)
                             ->update([
-                                'is_reject' => true,
+                                'auto_reject' => 1,
                                 'is_approval' => false,
+                                'timestamp_reject' => $now,
                             ]);
                         
                         // Hapus juga dari tabel absen (izin tidak diakui)

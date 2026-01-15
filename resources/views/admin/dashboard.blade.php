@@ -96,6 +96,12 @@
     <p>Kelola pengajuan work from office dan work from anywhere dari semua biro</p>
   </a>
 
+  <a href="{{ route('report.index') }}" class="dashboard-card">
+    <span class="icon">📊</span>
+    <h3>Report Absensi</h3>
+    <p>Lihat laporan absensi pegawai berdasarkan periode dan unit kerja</p>
+  </a>
+
   <a href="{{ route('admin.kalender') }}" class="dashboard-card">
     <span class="icon">📅</span>
     <h3>Kalender Kerja</h3>

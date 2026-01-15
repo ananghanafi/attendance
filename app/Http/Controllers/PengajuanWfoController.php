@@ -9,6 +9,16 @@ use Illuminate\Support\Facades\DB;
 class PengajuanWfoController extends Controller
 {
     /**
+     * Cek apakah user adalah admin
+     */
+    private function isAdmin(): bool
+    {
+        $user = Auth::user();
+        $role = DB::table('roles')->where('id', $user->role_id)->value('role_name');
+        return strtoupper($role ?? '') === 'ADMIN';
+    }
+
+    /**
      * Cek apakah user adalah admin atau VP
      */
     private function isAdminOrVP(): bool
@@ -16,6 +26,24 @@ class PengajuanWfoController extends Controller
         $user = Auth::user();
         $role = DB::table('roles')->where('id', $user->role_id)->value('role_name');
         return in_array(strtoupper($role ?? ''), ['ADMIN', 'VP']);
+    }
+
+    /**
+     * Cek apakah user adalah HC (Human Capital Division - by biro_name)
+     */
+    private function isHC(): bool
+    {
+        $user = Auth::user();
+        $biroName = DB::table('biro')->where('id', $user->biro_id)->value('biro_name');
+        return $biroName && stripos($biroName, 'Human Capital') !== false;
+    }
+
+    /**
+     * Cek apakah user dapat mengakses semua biro (Admin, VP, atau HC)
+     */
+    private function canAccessAllBiro(): bool
+    {
+        return $this->isAdminOrVP() || $this->isHC();
     }
 
     /**
@@ -29,14 +57,14 @@ class PengajuanWfoController extends Controller
     }
 
     /**
-     * Cek apakah user punya akses ke pengajuan (admin/VP ATAU user dari biro yang sama)
+     * Cek apakah user punya akses ke pengajuan (admin/VP/HC ATAU user dari biro yang sama)
      */
     private function ensureCanAccessPengajuan(int $pengajuanId): void
     {
         $user = Auth::user();
         
-        // Admin/VP selalu bisa akses
-        if ($this->isAdminOrVP()) {
+        // Admin/VP/HC selalu bisa akses
+        if ($this->canAccessAllBiro()) {
             return;
         }
         
@@ -52,13 +80,15 @@ class PengajuanWfoController extends Controller
 
     /**
      * Dashboard pengajuan WFO
-     * - Admin/VP: List semua biro dengan filter
+     * - Admin/VP/HC: List semua biro dengan filter
      * - User biasa: Hanya biro sendiri
      */
     public function index(Request $request)
     {
         $user = Auth::user();
-        $isAdminOrVP = $this->isAdminOrVP();
+        $canAccessAllBiro = $this->canAccessAllBiro();
+        $canBroadcast = $this->isAdmin(); // Hanya admin bisa broadcast
+        $isAdminOrVP = $this->isAdminOrVP(); // Untuk edit akses
 
         // Filter parameters
         $search = $request->query('search', '');
@@ -71,7 +101,7 @@ class PengajuanWfoController extends Controller
 
         // Get dropdown data for filters - hanya biro yang is_proyek = false (bukan proyek)
         // User biasa hanya lihat biro sendiri
-        if ($isAdminOrVP) {
+        if ($canAccessAllBiro) {
             $biros = DB::table('biro')
                 ->where('is_proyek', false)
                 ->orderBy('biro_name')
@@ -83,7 +113,7 @@ class PengajuanWfoController extends Controller
         }
 
         // USER BIASA: Hanya tampilkan pengajuan dari biro sendiri
-        if (!$isAdminOrVP) {
+        if (!$canAccessAllBiro) {
             $query = DB::table('pengajuan_wao as pw')
                 ->join('biro as b', 'pw.biro_id', '=', 'b.id')
                 ->join('kalender_kerja_v2 as kk', 'pw.kalender', '=', 'kk.kalender')
@@ -220,9 +250,9 @@ class PengajuanWfoController extends Controller
             $p->canEdit = $this->isPeriodeEditable($p->tgl_awal, $p->tgl_akhir);
         }
 
-        // Get ALL eligible IDs for broadcast (canEdit = true) across all pages
+        // Get ALL eligible IDs for broadcast (canEdit = true) across all pages - hanya jika bisa broadcast
         $allEligibleIds = [];
-        if ($isAdminOrVP) {
+        if ($canBroadcast) {
             $eligibleQuery = DB::table('pengajuan_wao as pw')
                 ->join('biro as b', 'pw.biro_id', '=', 'b.id')
                 ->join('kalender_kerja_v2 as kk', 'pw.kalender', '=', 'kk.kalender')
@@ -249,6 +279,8 @@ class PengajuanWfoController extends Controller
                 'tahun' => $tahun,
             ],
             'isAdminOrVP' => $isAdminOrVP,
+            'canBroadcast' => $canBroadcast,
+            'canAccessAllBiro' => $canAccessAllBiro,
             'allEligibleIds' => $allEligibleIds,
         ]);
     }

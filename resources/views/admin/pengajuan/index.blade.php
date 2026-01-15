@@ -335,7 +335,7 @@
 
 <!-- Card Table -->
 <div class="card">
-  @if($isAdminOrVP)
+  @if($canBroadcast ?? false)
   <!-- Broadcast Multiple Button -->
   <form id="broadcastForm" action="{{ route('pengajuan.broadcastMultiple') }}" method="POST" style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     @csrf
@@ -354,7 +354,7 @@
     <table>
       <thead>
         <tr>
-          @if($isAdminOrVP)
+          @if($canBroadcast ?? false)
           <th style="width:40px;text-align:center">
             <input type="checkbox" id="selectAll" title="Pilih Semua" style="cursor:pointer">
           </th>
@@ -374,7 +374,7 @@
       <tbody>
         @forelse($pengajuans as $p)
         <tr class="pengajuan-row">
-          @if($isAdminOrVP)
+          @if($canBroadcast ?? false)
           <td style="text-align:center">
             @if($p->canEdit)
             <input type="checkbox" name="ids[]" value="{{ $p->id }}" class="broadcast-checkbox" form="broadcastForm" data-biro="{{ $p->biro_name }}" style="cursor:pointer">
@@ -425,7 +425,7 @@
         </tr>
         @empty
         <tr id="emptyRow">
-          <td colspan="{{ $isAdminOrVP ? 11 : 10 }}" class="empty">
+          <td colspan="{{ ($canBroadcast ?? false) ? 11 : 10 }}" class="empty">
             @if(!empty($filters['search']))
             Tidak ada hasil yang cocok dengan pencarian "{{ $filters['search'] }}".
             @else
@@ -515,7 +515,7 @@
     });
   }
 
-  @if($isAdminOrVP)
+  @if($canBroadcast ?? false)
   // All eligible IDs from server (across all pages)
   const allEligibleData = @json($allEligibleIds ?? []);
   const STORAGE_KEY = 'pengajuan_broadcast_selection';

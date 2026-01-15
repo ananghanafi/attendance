@@ -47,9 +47,9 @@
         }
 
         .topbar .brand {
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
             display: flex;
             align-items: center;
             gap: 16px
@@ -351,7 +351,7 @@
     <div class="topbar">
         <div class="brand">
             <button class="hamburger" onclick="toggleSidebar()"><span></span><span></span><span></span></button>
-            <span>AbsensiWika</span>
+            <span>WIKAGEDUNG</span>
         </div>
         <div class="right">
             <div class="profile" id="profileMenu" onclick="toggleProfile()">
@@ -378,8 +378,13 @@
             <a href="{{ route("dashboard") }}" class="sidebar-item @if(request()->routeIs(" dashboard")) active @endif"><span class="icon">🏠</span><span class="text">Dashboard</span></a>
             <a href="{{ route("absen.index") }}" class="sidebar-item @if(request()->routeIs(" absen.index") || request()->routeIs("absen.formulir")) active @endif"><span class="icon">⏰</span><span class="text">Absen</span></a>
             <a href="{{ route("pengajuan.index") }}" class="sidebar-item @if(request()->routeIs(" pengajuan.*")) active @endif"><span class="icon">📋</span><span class="text">Pengajuan WFO</span></a>
-            @if($isAdmin ?? false)
+            @if($canAccessReport ?? false)
+            <a href="{{ route("report.index") }}" class="sidebar-item @if(request()->routeIs("report.*")) active @endif"><span class="icon">📊</span><span class="text">Report Absensi</span></a>
+            @endif
+            @if($canAccessKalender ?? false)
             <a href="{{ route("admin.kalender") }}" class="sidebar-item @if(request()->routeIs(" admin.kalender*") || request()->routeIs("kalender.*")) active @endif"><span class="icon">📅</span><span class="text">Kalender Kerja</span></a>
+            @endif
+            @if($canAccessSettings ?? false)
             <a href="{{ route("settings.index") }}" class="sidebar-item @if(request()->routeIs(" settings.*") || request()->routeIs("users.*") || request()->routeIs("biro.*") || request()->routeIs("jabatan.*") || request()->routeIs("role.*")) active @endif"><span class="icon">⚙️</span><span class="text">Setting User</span></a>
             @endif
         </div>

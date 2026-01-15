@@ -89,17 +89,36 @@
 </div>
 
 <div class="grid">
-  @if($isAdmin ?? false)
+  {{-- Pengajuan WFO - tampil untuk semua --}}
   <a class="tile" href="{{ route('pengajuan.index') }}">
     <div class="t">📋 Pengajuan WFO</div>
-    <div class="d">Kelola pengajuan work from office dan work from anywhere dari semua biro.</div>
+    <div class="d">
+      @if($canAccessAllBiro ?? false)
+      Kelola pengajuan work from office dan work from anywhere dari semua biro.
+      @else
+      Lihat jadwal pengajuan WFO/WFA untuk {{ $biroName ?? 'biro Anda' }}.
+      @endif
+    </div>
   </a>
 
+  {{-- Report Absensi - Admin & HC --}}
+  @if($canAccessReport ?? false)
+  <a class="tile" href="{{ route('report.index') }}">
+    <div class="t">📊 Report Absensi</div>
+    <div class="d">Lihat laporan absensi pegawai berdasarkan periode dan unit kerja.</div>
+  </a>
+  @endif
+
+  {{-- Kalender Kerja - Admin & HC --}}
+  @if($canAccessKalender ?? false)
   <a class="tile" href="{{ route('admin.kalender') }}">
     <div class="t">📅 Kalender Kerja</div>
     <div class="d">Input periode (minggu Senin–Minggu) dan lihat data kalender kerja.</div>
   </a>
+  @endif
 
+  {{-- Setting User - Admin only --}}
+  @if($canAccessSettings ?? false)
   <a class="tile" href="{{ route('settings.index') }}">
     <div class="t">⚙️ Setting User</div>
     <div class="d">Kelola user, biro, jabatan, dan role dalam satu tempat.</div>
@@ -111,13 +130,5 @@
     <div class="t">⏰ Absen</div>
     <div class="d">Lakukan absen masuk dan absen pulang harian.</div>
   </a>
-
-  {{-- Pengajuan WFO - tampil untuk semua user (view sesuai role) --}}
-  @if(!($isAdmin ?? false))
-  <a class="tile" href="{{ route('pengajuan.index') }}">
-    <div class="t">📋 Pengajuan WFO</div>
-    <div class="d">Lihat jadwal pengajuan WFO/WFA untuk {{ $biroName ?? 'biro Anda' }}.</div>
-  </a>
-  @endif
 </div>
 @endsection

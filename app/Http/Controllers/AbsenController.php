@@ -690,20 +690,17 @@ class AbsenController extends Controller
      */
     public function absenOtomatis($nip, $tanggal = null)
     {
-        // Validasi format tanggal (dd-mm-yyyy), jika tidak valid redirect ke tanggal hari ini
+        // Selalu gunakan tanggal hari ini (abaikan parameter tanggal)
         $tanggalHariIni = now()->format('d-m-Y');
         
-        if (!$tanggal || !$this->isValidTanggalFormat($tanggal)) {
+        // Jika tanggal tidak sesuai hari ini, redirect ke tanggal hari ini
+        if (!$tanggal || $tanggal !== $tanggalHariIni) {
             return redirect()->route('absen.otomatis', ['nip' => $nip, 'tanggal' => $tanggalHariIni]);
         }
 
         // Parse tanggal format dd-mm-yyyy
-        try {
-            $tanggalObj = \Carbon\Carbon::createFromFormat('d-m-Y', $tanggal);
-            $tanggalDb = $tanggalObj->format('Y-m-d');
-        } catch (\Exception $e) {
-            return redirect()->route('absen.otomatis', ['nip' => $nip, 'tanggal' => $tanggalHariIni]);
-        }
+        $tanggalObj = now();
+        $tanggalDb = $tanggalObj->format('Y-m-d');
 
         // Cari user berdasarkan NIP
         $user = DB::table('users')->where('nip', $nip)->first();
@@ -813,23 +810,21 @@ class AbsenController extends Controller
      * Route 2: /absensi/form-harian/{nip}/{tanggal?}
      * Untuk WFO di luar / WFA - form untuk masuk, otomatis untuk pulang
      * Jika tanggal tidak valid -> redirect ke tanggal hari ini
+     * Jika WFO + di kantor -> redirect ke route 1 (absen otomatis)
      */
     public function absenFormStandalone($nip, $tanggal = null)
     {
-        // Validasi format tanggal (dd-mm-yyyy), jika tidak valid redirect ke tanggal hari ini
+        // Selalu gunakan tanggal hari ini (abaikan parameter tanggal)
         $tanggalHariIni = now()->format('d-m-Y');
         
-        if (!$tanggal || !$this->isValidTanggalFormat($tanggal)) {
+        // Jika tanggal tidak sesuai hari ini, redirect ke tanggal hari ini
+        if (!$tanggal || $tanggal !== $tanggalHariIni) {
             return redirect()->route('absen.form.standalone', ['nip' => $nip, 'tanggal' => $tanggalHariIni]);
         }
 
         // Parse tanggal format dd-mm-yyyy
-        try {
-            $tanggalObj = \Carbon\Carbon::createFromFormat('d-m-Y', $tanggal);
-            $tanggalDb = $tanggalObj->format('Y-m-d');
-        } catch (\Exception $e) {
-            return redirect()->route('absen.form.standalone', ['nip' => $nip, 'tanggal' => $tanggalHariIni]);
-        }
+        $tanggalObj = now();
+        $tanggalDb = $tanggalObj->format('Y-m-d');
 
         // Cari user berdasarkan NIP
         $user = DB::table('users')->where('nip', $nip)->first();
@@ -838,6 +833,16 @@ class AbsenController extends Controller
                 'success' => false,
                 'message' => 'User dengan NIP ' . $nip . ' tidak ditemukan',
             ]);
+        }
+
+        // Cek jadwal WFO/WFA dan lokasi - jika WFO + di kantor, redirect ke absen otomatis
+        $jadwal = $this->getJadwalHariIniByNip($nip, $tanggalObj);
+        $isWfo = !$jadwal['ada_jadwal'] || $jadwal['is_wfo']; // Default WFO jika tidak ada jadwal
+        $isInsideOffice = $this->locationService->isInsideOffice();
+        
+        if ($isWfo && $isInsideOffice) {
+            // WFO + di kantor -> redirect ke route absen otomatis
+            return redirect()->route('absen.otomatis', ['nip' => $nip, 'tanggal' => $tanggal]);
         }
 
         $jamSekarang = $this->locationService->getCurrentTime()['formatted'];

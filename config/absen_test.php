@@ -10,5 +10,5 @@ return [
      * - 'kantor' = User berada di dalam kantor
      * - 'luar'   = User berada di luar kantor
      */
-    'posisi' => 'luar', // 'kantor' atau 'luar'
+    'posisi' => 'kantor', // 'kantor' atau 'luar'
 ];

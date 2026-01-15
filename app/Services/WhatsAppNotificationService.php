@@ -514,4 +514,40 @@ class WhatsAppNotificationService
             'response' => $response,
         ];
     }
+
+    /**
+     * Kirim pesan raw/manual ke nomor telepon tertentu
+     */
+    public function sendRawMessage(string $phoneNumber, string $message): array
+    {
+        // Format nomor telepon
+        $formattedPhone = $this->formatPhoneNumber($phoneNumber);
+
+        if (empty($formattedPhone)) {
+            return [
+                'success' => false,
+                'message' => 'Nomor telepon tidak valid.',
+            ];
+        }
+
+        // Siapkan data pesan - format sama seperti method lain yang sudah working
+        $recipients = [
+            [
+                'number' => $formattedPhone,
+                'message' => $message,
+                'isMedia' => false,
+                'typeMedia' => 'text',
+                'urlMedia' => '',
+            ]
+        ];
+
+        // Kirim ke API
+        $response = $this->sendToWhatsAppApi($recipients);
+
+        return [
+            'success' => true,
+            'message' => 'Pesan berhasil dikirim.',
+            'response' => $response,
+        ];
+    }
 }
