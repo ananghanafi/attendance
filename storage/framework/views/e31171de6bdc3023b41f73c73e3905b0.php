@@ -79,6 +79,16 @@
         background: #dc2626;
     }
 
+    .btn.warning {
+        background: #f59e0b;
+        border-color: #f59e0b;
+        color: #fff;
+    }
+
+    .btn.warning:hover {
+        background: #d97706;
+    }
+
     .btn:disabled {
         opacity: 0.6;
         cursor: not-allowed;
@@ -472,6 +482,13 @@
     <div class="page-header">
         <h1 class="page-title" id="periodTitle">LAPORAN KEBUTUHAN UANG MAKAN PER PEGAWAI</h1>
         <div class="export-buttons">
+            <button type="button" class="btn warning" id="btnUbahUangMakan">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                Ubah Uang Makan
+            </button>
             <button type="button" class="btn success" id="btnExportExcel" disabled>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -593,6 +610,27 @@
     </div>
 </div>
 
+<!-- Modal Ubah Uang Makan -->
+<div class="modal-overlay" id="uangMakanModal">
+    <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Ubah Uang Makan</h3>
+            <button class="modal-close" onclick="closeUangMakanModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="filter-label" style="margin-bottom: 8px; display: block;">Nilai Uang Makan</label>
+                <input type="number" id="inputUangMakan" class="filter-input" style="width: 100%; padding: 12px; font-size: 16px;" min="0" step="1000">
+                <small style="color: #6b7280; margin-top: 4px; display: block;">Masukkan nilai uang makan</small>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn" onclick="closeUangMakanModal()" style="background: #6b7280; color: #fff;">Batal</button>
+                <button type="button" class="btn primary" id="btnSimpanUangMakan">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Detail Modal -->
 <div class="modal-overlay" id="detailModal">
     <div class="modal-content">
@@ -668,6 +706,79 @@
         document.getElementById('tableSearch').addEventListener('keyup', filterTable);
         document.getElementById('btnExportExcel').addEventListener('click', exportExcel);
         document.getElementById('btnExportPdf').addEventListener('click', exportPDF);
+        document.getElementById('btnUbahUangMakan').addEventListener('click', openUangMakanModal);
+        document.getElementById('btnSimpanUangMakan').addEventListener('click', simpanUangMakan);
+    });
+
+    // === Uang Makan Modal Functions ===
+    function openUangMakanModal() {
+        // Fetch current uang makan value
+        fetch('<?php echo e(route("makan.getUangMakan")); ?>')
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    document.getElementById('inputUangMakan').value = result.uang;
+                }
+                document.getElementById('uangMakanModal').classList.add('active');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Gagal mengambil data uang makan');
+            });
+    }
+
+    function closeUangMakanModal() {
+        document.getElementById('uangMakanModal').classList.remove('active');
+    }
+
+    function simpanUangMakan() {
+        const uang = document.getElementById('inputUangMakan').value;
+        
+        if (!uang || uang < 0) {
+            alert('Nilai uang makan tidak valid');
+            return;
+        }
+
+        document.getElementById('btnSimpanUangMakan').disabled = true;
+        document.getElementById('btnSimpanUangMakan').textContent = 'Menyimpan...';
+
+        fetch('<?php echo e(route("makan.updateUangMakan")); ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
+            },
+            body: JSON.stringify({ uang: uang })
+        })
+        .then(response => response.json())
+        .then(result => {
+            document.getElementById('btnSimpanUangMakan').disabled = false;
+            document.getElementById('btnSimpanUangMakan').textContent = 'Simpan';
+
+            if (result.success) {
+                alert('Uang makan berhasil diubah menjadi Rp ' + Number(result.uang).toLocaleString('id-ID'));
+                closeUangMakanModal();
+                // Refresh data jika sudah ada data di tabel
+                if (currentFilters.tanggalFrom && currentFilters.tanggalTo) {
+                    fetchData();
+                }
+            } else {
+                alert(result.message || 'Gagal mengubah uang makan');
+            }
+        })
+        .catch(error => {
+            document.getElementById('btnSimpanUangMakan').disabled = false;
+            document.getElementById('btnSimpanUangMakan').textContent = 'Simpan';
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyimpan');
+        });
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('uangMakanModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeUangMakanModal();
+        }
     });
 
     function toggleExportButtons(enabled) {

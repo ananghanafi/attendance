@@ -414,6 +414,52 @@ class LaporanMakanController extends Controller
     /**
      * Get detail absen for modal
      */
+    /**
+     * Get current uang makan value
+     */
+    public function getUangMakan()
+    {
+        $this->ensureAdmin();
+
+        $uangMakan = DB::table('master_uang_makan')->first();
+        
+        return response()->json([
+            'success' => true,
+            'uang' => $uangMakan ? $uangMakan->uang : 35000,
+        ]);
+    }
+
+    /**
+     * Update uang makan value
+     */
+    public function updateUangMakan(Request $request)
+    {
+        $this->ensureAdmin();
+
+        $uang = $request->input('uang');
+        
+        if (!$uang || !is_numeric($uang) || $uang < 0) {
+            return response()->json(['success' => false, 'message' => 'Nilai uang makan tidak valid']);
+        }
+
+        $exists = DB::table('master_uang_makan')->exists();
+        
+        if ($exists) {
+            DB::table('master_uang_makan')->update(['uang' => (int) $uang]);
+        } else {
+            DB::table('master_uang_makan')->insert([
+                'id_jenis' => 1,
+                'uang' => (int) $uang,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Uang makan berhasil diubah',
+            'uang' => (int) $uang,
+        ]);
+    }
+
     public function getDetail(Request $request)
     {
         $this->ensureAdmin();

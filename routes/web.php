@@ -143,4 +143,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/makan', [LaporanMakanController::class, 'index'])->name('makan.index');
     Route::post('/makan/data', [LaporanMakanController::class, 'getData'])->name('makan.getData');
     Route::post('/makan/detail', [LaporanMakanController::class, 'getDetail'])->name('makan.getDetail');
+    Route::get('/makan/uang-makan', [LaporanMakanController::class, 'getUangMakan'])->name('makan.getUangMakan');
+    Route::post('/makan/uang-makan', [LaporanMakanController::class, 'updateUangMakan'])->name('makan.updateUangMakan');
 });
