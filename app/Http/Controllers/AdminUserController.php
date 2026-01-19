@@ -13,8 +13,8 @@ class AdminUserController extends Controller
     {
         $user = Auth::user();
         $role = DB::table('roles')->where('id', $user->role_id)->value('role_name');
-        // Accept ADMIN and VP roles
-        if (!in_array(strtoupper($role ?? ''), ['ADMIN', 'VP'])) {
+        // Only ADMIN can access
+        if (strtoupper($role ?? '') !== 'ADMIN') {
             abort(403);
         }
     }
@@ -82,7 +82,7 @@ class AdminUserController extends Controller
 
         // Get ID from session
         $id = $request->session()->get('editing_user_id');
-        
+
         if (!$id) {
             return redirect()->route('settings.index')->with('error', 'User tidak ditemukan');
         }
@@ -105,7 +105,7 @@ class AdminUserController extends Controller
         $this->ensureAdmin();
 
         $id = $request->session()->get('editing_user_id');
-        
+
         if (!$id) {
             return redirect()->route('settings.index')->with('error', 'User tidak ditemukan');
         }
@@ -160,7 +160,7 @@ class AdminUserController extends Controller
 
         // Get ID from request body (POST data, not URL)
         $id = $request->input('id');
-        
+
         if (!$id) {
             return redirect()->route('settings.index')->with('error', 'User tidak ditemukan');
         }
@@ -180,22 +180,22 @@ class AdminUserController extends Controller
     {
         // Remove all non-numeric characters (spaces, dashes, parentheses, +, etc.)
         $phone = preg_replace('/[^\d]/', '', $phone);
-        
+
         // If starts with 62, keep as is
         if (str_starts_with($phone, '62')) {
             return $phone;
         }
-        
+
         // If starts with 08, replace 0 with 62
         if (str_starts_with($phone, '08')) {
             return '62' . substr($phone, 1);
         }
-        
+
         // If starts with 8 (user typed without 0 or 62), add 62
         if (str_starts_with($phone, '8')) {
             return '62' . $phone;
         }
-        
+
         // For other formats, return as is
         return $phone;
     }
@@ -240,9 +240,9 @@ class AdminUserController extends Controller
             'nama' => ['required', 'string', 'max:50'],
             'username' => ['required', 'string', 'max:35', 'unique:users,username'],
             'password' => [
-                'required', 
-                'string', 
-                'min:8', 
+                'required',
+                'string',
+                'min:8',
                 'max:255',
                 'regex:/[a-z]/',      // minimal 1 huruf kecil
                 'regex:/[A-Z]/',      // minimal 1 huruf besar

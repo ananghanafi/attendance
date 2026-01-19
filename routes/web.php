@@ -130,7 +130,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/absen/masuk', [AbsenController::class, 'storeAbsenMasuk'])->name('absen.storeMasuk');
     Route::post('/absen/pulang', [AbsenController::class, 'storeAbsenPulang'])->name('absen.storePulang');
 
-    // Report (admin & vp only)
+    // Report (admin & HC only)
     Route::get('/absensi/report', [ReportController::class, 'index'])->name('report.index');
     Route::post('/absensi/report/data', [ReportController::class, 'getData'])->name('report.getData');
     Route::post('/absensi/report/export-excel', [ReportController::class, 'exportExcel'])->name('report.exportExcel');

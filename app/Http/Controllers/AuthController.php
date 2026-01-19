@@ -70,7 +70,7 @@ class AuthController extends Controller
 
         // Determine akses menu
         $canAccessPengajuanWfo = true; // Semua bisa akses
-        $canBroadcast = $isAdmin; // Hanya admin bisa broadcast
+        $canBroadcast = $isAdmin || $isHC; // Admin dan HC bisa broadcast
         $canAccessAllBiro = $isAdmin || $isVP || $isHC; // Admin, VP, HC bisa akses semua biro
         $canAccessKalender = $isAdmin || $isHC; // Admin dan HC
         $canAccessReport = $isAdmin || $isHC; // Admin dan HC

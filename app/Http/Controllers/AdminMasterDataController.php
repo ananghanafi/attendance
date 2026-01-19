@@ -15,8 +15,8 @@ class AdminMasterDataController extends Controller
     {
         $user = Auth::user();
         $role = DB::table('roles')->where('id', $user->role_id)->value('role_name');
-        // ADMIN VP roles
-        if (!in_array(strtoupper($role ?? ''), ['ADMIN', 'VP'])) {
+        // Only ADMIN can access
+        if (strtoupper($role ?? '') !== 'ADMIN') {
             abort(403);
         }
     }
