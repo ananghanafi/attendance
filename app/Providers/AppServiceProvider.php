@@ -32,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
             $canAccessAllBiro = false;
             $canAccessKalender = false;
             $canAccessReport = false;
+            $canAccessLaporanMakan = false;
             $canAccessSettings = false;
             
             if (Auth::check()) {
@@ -50,6 +51,7 @@ class AppServiceProvider extends ServiceProvider
                 $canAccessAllBiro = $isAdmin || $isVP || $isHC;
                 $canAccessKalender = $isAdmin || $isHC;
                 $canAccessReport = $isAdmin || $isHC;
+                $canAccessLaporanMakan = $isAdmin; // Hanya Admin yang bisa akses Laporan Makan
                 $canAccessSettings = $isAdmin;
                 
                 // Cek apakah user punya bawahan (ada user lain yang nip_atasannya = user ini)
@@ -67,6 +69,7 @@ class AppServiceProvider extends ServiceProvider
                 'canAccessAllBiro' => $canAccessAllBiro,
                 'canAccessKalender' => $canAccessKalender,
                 'canAccessReport' => $canAccessReport,
+                'canAccessLaporanMakan' => $canAccessLaporanMakan,
                 'canAccessSettings' => $canAccessSettings,
             ]);
         });

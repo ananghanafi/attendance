@@ -1,8 +1,6 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', 'WG Absen — Kalender Kerja'); ?>
 
-@section('title', 'WG Absen — Kalender Kerja')
-
-@section('styles')
+<?php $__env->startSection('styles'); ?>
     .layout{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start;width:100%;min-width:0;max-width:100%}
     @media(max-width:900px){
     .layout{grid-template-columns:1fr}
@@ -49,9 +47,9 @@
     th{color:#111;font-size:12px;text-transform:uppercase;letter-spacing:.02em}
     .status{margin:10px 0 0;color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0;padding:10px;border-radius:12px}
     .error{margin:10px 0 0;color:#991b1b;background:#fff1f2;border:1px solid #fecdd3;padding:10px;border-radius:12px}
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
     <div class="layout">
         <aside class="sidebarCard">
             <div class="side-title">Menu</div>
@@ -66,22 +64,22 @@
                 <div class="card">
                     <h2 style="margin:0 0 12px">Input Kalender Kerja</h2>
 
-                    @if (session('status'))
-                        <div class="status">{{ session('status') }}</div>
-                    @endif
-                    @if ($errors->any())
-                        <div class="error">{{ $errors->first() }}</div>
-                    @endif
+                    <?php if(session('status')): ?>
+                        <div class="status"><?php echo e(session('status')); ?></div>
+                    <?php endif; ?>
+                    <?php if($errors->any()): ?>
+                        <div class="error"><?php echo e($errors->first()); ?></div>
+                    <?php endif; ?>
 
-                    <form method="POST" action="{{ route('admin.kalender.store') }}" id="kalenderForm">
-                        @csrf
+                    <form method="POST" action="<?php echo e(route('admin.kalender.store')); ?>" id="kalenderForm">
+                        <?php echo csrf_field(); ?>
                         <div class="grid">
                             <div>
                                 <label for="minggu">Minggu ke-</label>
                                 <select id="minggu" name="minggu" required>
-                                    @for ($i = 1; $i <= 6; $i++)
-                                        <option value="{{ $i }}">{{ $i }}</option>
-                                    @endfor
+                                    <?php for($i = 1; $i <= 6; $i++): ?>
+                                        <option value="<?php echo e($i); ?>"><?php echo e($i); ?></option>
+                                    <?php endfor; ?>
                                 </select>
                             </div>
                             <div>
@@ -153,9 +151,9 @@
             <div id="panel-data" class="panel">
                 <div class="card">
                     <h2 style="margin:0 0 12px">Data Kalender Kerja</h2>
-                    @if (session('status'))
-                        <div class="status">{{ session('status') }}</div>
-                    @endif
+                    <?php if(session('status')): ?>
+                        <div class="status"><?php echo e(session('status')); ?></div>
+                    <?php endif; ?>
                     <!-- Search Box -->
                     <div style="margin-bottom:16px">
                         <input type="text" id="searchKalender"
@@ -177,49 +175,49 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($rows as $r)
+                                <?php $__empty_1 = true; $__currentLoopData = $rows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $r): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                     <tr class="kalender-row">
-                                        <td>{{ ($rows->currentPage() - 1) * $rows->perPage() + $loop->iteration }}</td>
-                                        <td>{{ $r->judul }}</td>
-                                        <td>{{ $r->tgl_awal ? $r->tgl_awal->format('Y-m-d') : '' }}</td>
-                                        <td>{{ $r->tgl_akhir ? $r->tgl_akhir->format('Y-m-d') : '' }}</td>
-                                        <td>{{ $r->persentase !== null ? $r->persentase . '%' : '-' }}</td>
-                                        <td>{{ $r->persentase_wfa !== null ? $r->persentase_wfa . '%' : '-' }}</td>
+                                        <td><?php echo e(($rows->currentPage() - 1) * $rows->perPage() + $loop->iteration); ?></td>
+                                        <td><?php echo e($r->judul); ?></td>
+                                        <td><?php echo e($r->tgl_awal ? $r->tgl_awal->format('Y-m-d') : ''); ?></td>
+                                        <td><?php echo e($r->tgl_akhir ? $r->tgl_akhir->format('Y-m-d') : ''); ?></td>
+                                        <td><?php echo e($r->persentase !== null ? $r->persentase . '%' : '-'); ?></td>
+                                        <td><?php echo e($r->persentase_wfa !== null ? $r->persentase_wfa . '%' : '-'); ?></td>
                                         <td>
                                             <div style="display:flex;gap:8px;flex-wrap:wrap">
-                                                <form method="POST" action="{{ route('kalender.setEdit') }}"
+                                                <form method="POST" action="<?php echo e(route('kalender.setEdit')); ?>"
                                                     style="margin:0">
-                                                    @csrf
-                                                    <input type="hidden" name="id" value="{{ $r->id }}">
+                                                    <?php echo csrf_field(); ?>
+                                                    <input type="hidden" name="id" value="<?php echo e($r->id); ?>">
                                                     <button type="submit" class="btn"
                                                         style="padding:8px 10px;border-radius:8px;border:1px solid #eef0f6;background:#fff">Edit</button>
                                                 </form>
 
-                                                <form method="POST" action="{{ route('kalender.broadcast') }}"
+                                                <form method="POST" action="<?php echo e(route('kalender.broadcast')); ?>"
                                                     onsubmit="return confirm('Kirim notifikasi ke semua biro?');"
                                                     style="margin:0">
-                                                    @csrf
-                                                    <input type="hidden" name="id" value="{{ $r->id }}">
+                                                    <?php echo csrf_field(); ?>
+                                                    <input type="hidden" name="id" value="<?php echo e($r->id); ?>">
                                                     <button type="submit" class="btn"
                                                         style="padding:8px 10px;border-radius:8px;border:1px solid #c7d2fe;background:#eef2ff;color:#4338ca"
                                                         title="Broadcast ke semua biro">📢 Broadcast</button>
                                                 </form>
 
-                                                <form method="POST" action="{{ route('kalender.setDelete') }}"
+                                                <form method="POST" action="<?php echo e(route('kalender.setDelete')); ?>"
                                                     onsubmit="return confirm('Yakin hapus data ini?');" style="margin:0">
-                                                    @csrf
-                                                    <input type="hidden" name="id" value="{{ $r->id }}">
+                                                    <?php echo csrf_field(); ?>
+                                                    <input type="hidden" name="id" value="<?php echo e($r->id); ?>">
                                                     <button type="submit" class="btn"
                                                         style="padding:8px 10px;border-radius:8px;border:1px solid #fecdd3;background:#fff1f2;color:#991b1b">Hapus</button>
                                                 </form>
                                             </div>
                                         </td>
                                     </tr>
-                                @empty
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <tr id="emptyRow">
                                         <td colspan="7" style="color:var(--muted)">Belum ada data.</td>
                                     </tr>
-                                @endforelse
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -230,66 +228,66 @@
                     </div>
 
                     <!-- Pagination Kalender Kerja -->
-                    @if ($rows->total() > 0)
+                    <?php if($rows->total() > 0): ?>
                         <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--text-muted)">
-                            Menampilkan {{ $rows->firstItem() ?? 0 }} - {{ $rows->lastItem() ?? 0 }} dari
-                            {{ $rows->total() }} data
+                            Menampilkan <?php echo e($rows->firstItem() ?? 0); ?> - <?php echo e($rows->lastItem() ?? 0); ?> dari
+                            <?php echo e($rows->total()); ?> data
                         </div>
-                    @endif
+                    <?php endif; ?>
 
-                    @if ($rows->hasPages())
+                    <?php if($rows->hasPages()): ?>
                         <div class="pagination-wrapper"
                             style="margin-top:12px;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap">
-                            {{-- Previous --}}
-                            @if ($rows->onFirstPage())
+                            
+                            <?php if($rows->onFirstPage()): ?>
                                 <span class="btn" style="padding:8px 12px;opacity:0.5;cursor:not-allowed">‹ Prev</span>
-                            @else
+                            <?php else: ?>
                                 <button type="button" class="btn pagination-btn"
-                                    data-page="{{ $rows->currentPage() - 1 }}" data-type="kalender"
+                                    data-page="<?php echo e($rows->currentPage() - 1); ?>" data-type="kalender"
                                     style="padding:8px 12px">‹ Prev</button>
-                            @endif
+                            <?php endif; ?>
 
-                            {{-- Page Numbers --}}
-                            @php
+                            
+                            <?php
                                 $start = max(1, $rows->currentPage() - 2);
                                 $end = min($rows->lastPage(), $rows->currentPage() + 2);
-                            @endphp
+                            ?>
 
-                            @if ($start > 1)
+                            <?php if($start > 1): ?>
                                 <button type="button" class="btn pagination-btn" data-page="1" data-type="kalender"
                                     style="padding:8px 12px">1</button>
-                                @if ($start > 2)
+                                <?php if($start > 2): ?>
                                     <span style="padding:8px 4px;color:var(--text-muted)">...</span>
-                                @endif
-                            @endif
+                                <?php endif; ?>
+                            <?php endif; ?>
 
-                            @for ($i = $start; $i <= $end; $i++)
-                                @if ($i == $rows->currentPage())
-                                    <span class="btn primary" style="padding:8px 12px">{{ $i }}</span>
-                                @else
-                                    <button type="button" class="btn pagination-btn" data-page="{{ $i }}"
-                                        data-type="kalender" style="padding:8px 12px">{{ $i }}</button>
-                                @endif
-                            @endfor
+                            <?php for($i = $start; $i <= $end; $i++): ?>
+                                <?php if($i == $rows->currentPage()): ?>
+                                    <span class="btn primary" style="padding:8px 12px"><?php echo e($i); ?></span>
+                                <?php else: ?>
+                                    <button type="button" class="btn pagination-btn" data-page="<?php echo e($i); ?>"
+                                        data-type="kalender" style="padding:8px 12px"><?php echo e($i); ?></button>
+                                <?php endif; ?>
+                            <?php endfor; ?>
 
-                            @if ($end < $rows->lastPage())
-                                @if ($end < $rows->lastPage() - 1)
+                            <?php if($end < $rows->lastPage()): ?>
+                                <?php if($end < $rows->lastPage() - 1): ?>
                                     <span style="padding:8px 4px;color:var(--text-muted)">...</span>
-                                @endif
-                                <button type="button" class="btn pagination-btn" data-page="{{ $rows->lastPage() }}"
-                                    data-type="kalender" style="padding:8px 12px">{{ $rows->lastPage() }}</button>
-                            @endif
+                                <?php endif; ?>
+                                <button type="button" class="btn pagination-btn" data-page="<?php echo e($rows->lastPage()); ?>"
+                                    data-type="kalender" style="padding:8px 12px"><?php echo e($rows->lastPage()); ?></button>
+                            <?php endif; ?>
 
-                            {{-- Next --}}
-                            @if ($rows->hasMorePages())
+                            
+                            <?php if($rows->hasMorePages()): ?>
                                 <button type="button" class="btn pagination-btn"
-                                    data-page="{{ $rows->currentPage() + 1 }}" data-type="kalender"
+                                    data-page="<?php echo e($rows->currentPage() + 1); ?>" data-type="kalender"
                                     style="padding:8px 12px">Next ›</button>
-                            @else
+                            <?php else: ?>
                                 <span class="btn" style="padding:8px 12px;opacity:0.5;cursor:not-allowed">Next ›</span>
-                            @endif
+                            <?php endif; ?>
                         </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -301,12 +299,12 @@
                         menandai sebagai hari libur. Tanggal libur akan otomatis menonaktifkan pilihan WFO/WFA pada
                         pengajuan.</p>
 
-                    @if (session('status'))
-                        <div class="status">{{ session('status') }}</div>
-                    @endif
+                    <?php if(session('status')): ?>
+                        <div class="status"><?php echo e(session('status')); ?></div>
+                    <?php endif; ?>
 
-                    <form method="POST" action="{{ route('kalender.libur.store') }}" id="liburForm">
-                        @csrf
+                    <form method="POST" action="<?php echo e(route('kalender.libur.store')); ?>" id="liburForm">
+                        <?php echo csrf_field(); ?>
 
                         <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
                             <div>
@@ -378,28 +376,28 @@
                                 </tr>
                             </thead>
                             <tbody id="liburTableBody">
-                                @forelse($libur as $l)
-                                    @php
+                                <?php $__empty_1 = true; $__currentLoopData = $libur; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $l): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                    <?php
                                         $dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
                                         $dateObj = \Carbon\Carbon::parse($l->tanggal);
                                         $dayName = $dayNames[$dateObj->dayOfWeek];
-                                    @endphp
+                                    ?>
                                     <tr class="libur-row">
-                                        <td>{{ ($libur->currentPage() - 1) * $libur->perPage() + $loop->iteration }}</td>
-                                        <td>{{ $dateObj->format('d F Y') }}</td>
-                                        <td>{{ $dayName }}</td>
+                                        <td><?php echo e(($libur->currentPage() - 1) * $libur->perPage() + $loop->iteration); ?></td>
+                                        <td><?php echo e($dateObj->format('d F Y')); ?></td>
+                                        <td><?php echo e($dayName); ?></td>
                                         <td>
                                             <button type="button" class="btn delete-libur-btn"
-                                                data-id="{{ $l->id }}"
+                                                data-id="<?php echo e($l->id); ?>"
                                                 style="padding:8px 10px;border-radius:8px;border:1px solid #fecdd3;background:#fff1f2;color:#991b1b">Hapus</button>
                                         </td>
                                     </tr>
-                                @empty
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <tr id="emptyLiburRow">
                                         <td colspan="4" style="text-align:center;color:var(--text-muted)">Belum ada
                                             data tanggal libur.</td>
                                     </tr>
-                                @endforelse
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -409,74 +407,74 @@
                     </div>
 
                     <!-- Info Total Data Libur -->
-                    @if ($libur->total() > 0)
+                    <?php if($libur->total() > 0): ?>
                         <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--text-muted)">
-                            Menampilkan {{ $libur->firstItem() ?? 0 }} - {{ $libur->lastItem() ?? 0 }} dari
-                            {{ $libur->total() }} data
+                            Menampilkan <?php echo e($libur->firstItem() ?? 0); ?> - <?php echo e($libur->lastItem() ?? 0); ?> dari
+                            <?php echo e($libur->total()); ?> data
                         </div>
-                    @endif
+                    <?php endif; ?>
 
                     <!-- Pagination Kalender Libur -->
-                    @if ($libur->hasPages())
+                    <?php if($libur->hasPages()): ?>
                         <div class="pagination-wrapper"
                             style="margin-top:12px;display:flex;justify-content:center;align-items:center;gap:8px;flex-wrap:wrap">
-                            {{-- Previous --}}
-                            @if ($libur->onFirstPage())
+                            
+                            <?php if($libur->onFirstPage()): ?>
                                 <span class="btn" style="padding:8px 12px;opacity:0.5;cursor:not-allowed">‹ Prev</span>
-                            @else
+                            <?php else: ?>
                                 <button type="button" class="btn pagination-btn"
-                                    data-page="{{ $libur->currentPage() - 1 }}" data-type="libur"
+                                    data-page="<?php echo e($libur->currentPage() - 1); ?>" data-type="libur"
                                     style="padding:8px 12px">‹ Prev</button>
-                            @endif
+                            <?php endif; ?>
 
-                            {{-- Page Numbers --}}
-                            @php
+                            
+                            <?php
                                 $startL = max(1, $libur->currentPage() - 2);
                                 $endL = min($libur->lastPage(), $libur->currentPage() + 2);
-                            @endphp
+                            ?>
 
-                            @if ($startL > 1)
+                            <?php if($startL > 1): ?>
                                 <button type="button" class="btn pagination-btn" data-page="1" data-type="libur"
                                     style="padding:8px 12px">1</button>
-                                @if ($startL > 2)
+                                <?php if($startL > 2): ?>
                                     <span style="padding:8px 4px;color:var(--text-muted)">...</span>
-                                @endif
-                            @endif
+                                <?php endif; ?>
+                            <?php endif; ?>
 
-                            @for ($i = $startL; $i <= $endL; $i++)
-                                @if ($i == $libur->currentPage())
-                                    <span class="btn primary" style="padding:8px 12px">{{ $i }}</span>
-                                @else
-                                    <button type="button" class="btn pagination-btn" data-page="{{ $i }}"
-                                        data-type="libur" style="padding:8px 12px">{{ $i }}</button>
-                                @endif
-                            @endfor
+                            <?php for($i = $startL; $i <= $endL; $i++): ?>
+                                <?php if($i == $libur->currentPage()): ?>
+                                    <span class="btn primary" style="padding:8px 12px"><?php echo e($i); ?></span>
+                                <?php else: ?>
+                                    <button type="button" class="btn pagination-btn" data-page="<?php echo e($i); ?>"
+                                        data-type="libur" style="padding:8px 12px"><?php echo e($i); ?></button>
+                                <?php endif; ?>
+                            <?php endfor; ?>
 
-                            @if ($endL < $libur->lastPage())
-                                @if ($endL < $libur->lastPage() - 1)
+                            <?php if($endL < $libur->lastPage()): ?>
+                                <?php if($endL < $libur->lastPage() - 1): ?>
                                     <span style="padding:8px 4px;color:var(--text-muted)">...</span>
-                                @endif
-                                <button type="button" class="btn pagination-btn" data-page="{{ $libur->lastPage() }}"
-                                    data-type="libur" style="padding:8px 12px">{{ $libur->lastPage() }}</button>
-                            @endif
+                                <?php endif; ?>
+                                <button type="button" class="btn pagination-btn" data-page="<?php echo e($libur->lastPage()); ?>"
+                                    data-type="libur" style="padding:8px 12px"><?php echo e($libur->lastPage()); ?></button>
+                            <?php endif; ?>
 
-                            {{-- Next --}}
-                            @if ($libur->hasMorePages())
+                            
+                            <?php if($libur->hasMorePages()): ?>
                                 <button type="button" class="btn pagination-btn"
-                                    data-page="{{ $libur->currentPage() + 1 }}" data-type="libur"
+                                    data-page="<?php echo e($libur->currentPage() + 1); ?>" data-type="libur"
                                     style="padding:8px 12px">Next ›</button>
-                            @else
+                            <?php else: ?>
                                 <span class="btn" style="padding:8px 12px;opacity:0.5;cursor:not-allowed">Next ›</span>
-                            @endif
+                            <?php endif; ?>
                         </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </div>
         </main>
     </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('scripts')
+<?php $__env->startSection('scripts'); ?>
     // --- Tabs ---
     const tabs = document.querySelectorAll('.tab');
     const panelForm = document.getElementById('panel-form');
@@ -959,18 +957,18 @@
         if (!confirm('Yakin hapus tanggal libur ini?')) return;
 
         try {
-            const response = await fetch(`{{ url('/kalender-kerja/libur') }}/${id}`, {
+            const response = await fetch(`<?php echo e(url('/kalender-kerja/libur')); ?>/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Accept': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
                 }
             });
 
             const result = await response.json();
 
             if (result.success) {
-                window.location.href = '{{ route('admin.kalender') }}?tab=libur';
+                window.location.href = '<?php echo e(route('admin.kalender')); ?>?tab=libur';
             } else {
                 alert(result.message || 'Gagal menghapus tanggal libur.');
             }
@@ -1017,13 +1015,13 @@
 
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = '{{ route('admin.kalender.page') }}';
+            form.action = '<?php echo e(route('admin.kalender.page')); ?>';
             form.style.display = 'none';
 
             const csrf = document.createElement('input');
             csrf.type = 'hidden';
             csrf.name = '_token';
-            csrf.value = '{{ csrf_token() }}';
+            csrf.value = '<?php echo e(csrf_token()); ?>';
             form.appendChild(csrf);
 
             const pageInput = document.createElement('input');
@@ -1043,7 +1041,7 @@
         });
     });
 
-    const activeTab = '{{ $activeTab ?? 'form' }}';
+    const activeTab = '<?php echo e($activeTab ?? 'form'); ?>';
     if (activeTab && activeTab !== 'form') {
         tabs.forEach(t => {
             const key = t.getAttribute('data-tab');
@@ -1066,4 +1064,6 @@
     // Make functions available globally
     window.removeLiburDate = removeLiburDate;
     window.deleteLibur = deleteLibur;
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\Kevannn\Documents\FILE MAGANG\AbsensiWika\resources\views/admin/kalender/index.blade.php ENDPATH**/ ?>

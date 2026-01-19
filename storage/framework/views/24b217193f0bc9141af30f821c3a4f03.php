@@ -1,8 +1,8 @@
-@extends('layouts.app')
 
-@section('title', 'WG Absen — Dashboard')
 
-@section('styles')
+<?php $__env->startSection('title', 'WG Absen — Dashboard'); ?>
+
+<?php $__env->startSection('styles'); ?>
 <style>
   .content-header {
     margin-bottom: 2rem;
@@ -76,12 +76,12 @@
     }
   }
 </style>
-@endsection
+<?php $__env->stopSection(); ?>
 
-@section('content')
-@if(session('status'))
-<div class="statusMsg">{{ session('status') }}</div>
-@endif
+<?php $__env->startSection('content'); ?>
+<?php if(session('status')): ?>
+<div class="statusMsg"><?php echo e(session('status')); ?></div>
+<?php endif; ?>
 
 <div class="content-header">
   <h1>Dashboard</h1>
@@ -89,48 +89,49 @@
 </div>
 
 <div class="grid">
-  {{-- Kalender Kerja - Admin & HC --}}
-  @if($canAccessKalender ?? false)
-  <a class="tile" href="{{ route('admin.kalender') }}">
+  
+  <?php if($canAccessKalender ?? false): ?>
+  <a class="tile" href="<?php echo e(route('admin.kalender')); ?>">
     <div class="t">📅 Kalender Kerja</div>
     <div class="d">Input periode (minggu Senin–Minggu) dan lihat data kalender kerja.</div>
   </a>
-  @endif
+  <?php endif; ?>
 
-  {{-- Pengajuan WFO - tampil untuk semua --}}
-  <a class="tile" href="{{ route('pengajuan.index') }}">
+  
+  <a class="tile" href="<?php echo e(route('pengajuan.index')); ?>">
     <div class="t">📋 Pengajuan WFO</div>
     <div class="d">
-      @if($canAccessAllBiro ?? false)
+      <?php if($canAccessAllBiro ?? false): ?>
       Kelola pengajuan work from office dan work from anywhere dari semua biro.
-      @else
-      Lihat jadwal pengajuan WFO/WFA untuk {{ $biroName ?? 'biro Anda' }}.
-      @endif
+      <?php else: ?>
+      Lihat jadwal pengajuan WFO/WFA untuk <?php echo e($biroName ?? 'biro Anda'); ?>.
+      <?php endif; ?>
     </div>
   </a>
 
-  {{-- Report Absensi - Admin & HC --}}
-  @if($canAccessReport ?? false)
-  <a class="tile" href="{{ route('report.index') }}">
+  
+  <?php if($canAccessReport ?? false): ?>
+  <a class="tile" href="<?php echo e(route('report.index')); ?>">
     <div class="t">📊 Report Absensi</div>
     <div class="d">Lihat laporan absensi pegawai berdasarkan periode dan unit kerja.</div>
   </a>
-  @endif
+  <?php endif; ?>
 
-  {{-- Laporan Uang Makan - Admin only --}}
-  @if($canAccessLaporanMakan ?? false)
-  <a class="tile" href="{{ route('makan.index') }}">
+  
+  <?php if($canAccessLaporanMakan ?? false): ?>
+  <a class="tile" href="<?php echo e(route('makan.index')); ?>">
     <div class="t">🍽️ Laporan Uang Makan</div>
     <div class="d">Lihat laporan uang makan pegawai berdasarkan kehadiran WFO.</div>
   </a>
-  @endif
+  <?php endif; ?>
 
-  {{-- Setting User - Admin only --}}
-  @if($canAccessSettings ?? false)
-  <a class="tile" href="{{ route('settings.index') }}">
+  
+  <?php if($canAccessSettings ?? false): ?>
+  <a class="tile" href="<?php echo e(route('settings.index')); ?>">
     <div class="t">⚙️ Setting User</div>
     <div class="d">Kelola user, biro, jabatan, dan role dalam satu tempat.</div>
   </a>
-  @endif
+  <?php endif; ?>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\Kevannn\Documents\FILE MAGANG\AbsensiWika\resources\views/dashboard.blade.php ENDPATH**/ ?>

@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             BiroSeeder::class,
             JabatanSeeder::class,
             UserRoleSeeder::class,
+            MasterUangMakanSeeder::class,
         ]);
     }
 }

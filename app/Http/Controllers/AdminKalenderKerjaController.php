@@ -232,7 +232,8 @@ class AdminKalenderKerjaController extends Controller
                 'kalender' => $kalenderDb,
             ]);
         }
-        session(['kalender_active_tab' => 'data']);
+        // Tetap di tab form setelah sukses simpan
+        session(['kalender_active_tab' => 'form']);
 
         return redirect()->route('admin.kalender')->with('status', 'Data kalender kerja berhasil disimpan.');
     }

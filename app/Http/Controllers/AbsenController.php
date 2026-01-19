@@ -171,7 +171,7 @@ class AbsenController extends Controller
             $absenData = [
                 'scan_masuk' => $jamSekarang,
                 'scan_masuk_awal' => $jamSekarang,
-                'status_izin' => 'hadir', // Status hadir langsung
+                'status_izin' => 'dinas', // Status dinas untuk WFO
                 'ip' => $this->locationService->getClientIp(),
             ];
 
@@ -775,7 +775,7 @@ class AbsenController extends Controller
                 'tanggal' => $tanggalDb,
                 'scan_masuk' => $jamSekarang,
                 'scan_masuk_awal' => $jamSekarang,
-                'status_izin' => 'hadir',
+                'status_izin' => 'dinas',
                 'biro_name' => $biroName,
                 'minggu' => $minggu,
                 'bulan' => $bulan,

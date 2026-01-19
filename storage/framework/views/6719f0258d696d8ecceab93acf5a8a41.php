@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield("title", "AbsensiWika")</title>
+    <title><?php echo $__env->yieldContent("title", "AbsensiWika"); ?></title>
     <style>
         :root {
             --topbar-height: 70px;
@@ -399,7 +399,7 @@
             }
         }
 
-        @yield("styles")
+        <?php echo $__env->yieldContent("styles"); ?>
     </style>
 </head>
 
@@ -410,17 +410,17 @@
         </div>
         <div class="right">
             <div class="profile" id="profileMenu" onclick="toggleProfile()">
-                <div class="profile-avatar">@php echo strtoupper(substr(auth()->user()->nama ?? auth()->user()->username, 0, 1)); @endphp</div>
+                <div class="profile-avatar"><?php echo strtoupper(substr(auth()->user()->nama ?? auth()->user()->username, 0, 1)); ?></div>
                 <div class="profile-info">
-                    <div class="profile-name">{{ auth()->user()->nama ?? auth()->user()->username }}</div>
+                    <div class="profile-name"><?php echo e(auth()->user()->nama ?? auth()->user()->username); ?></div>
                 </div>
                 <div class="profile-dropdown">
                     <div class="profile-dropdown-header">
-                        <div class="profile-dropdown-name">{{ auth()->user()->nama ?? auth()->user()->username }}</div>
+                        <div class="profile-dropdown-name"><?php echo e(auth()->user()->nama ?? auth()->user()->username); ?></div>
                     </div>
                     <div class="profile-dropdown-menu">
-                        <form method="POST" action="{{ route("logout") }}" style="margin:0">
-                            @csrf
+                        <form method="POST" action="<?php echo e(route("logout")); ?>" style="margin:0">
+                            <?php echo csrf_field(); ?>
                             <button type="submit" class="profile-dropdown-item logout"><span></span><span>Logout</span></button>
                         </form>
                     </div>
@@ -434,36 +434,36 @@
             <span class="brand-short">WG</span>
         </div>
         <div class="sidebar-menu">
-            <a href="{{ route('dashboard') }}" class="sidebar-item @if(request()->routeIs('dashboard')) active @endif">
+            <a href="<?php echo e(route('dashboard')); ?>" class="sidebar-item <?php if(request()->routeIs('dashboard')): ?> active <?php endif; ?>">
                 <span class="icon">🏠</span><span class="text">Dashboard</span>
             </a>
-            @if($canAccessKalender ?? false)
-            <a href="{{ route('admin.kalender') }}" class="sidebar-item @if(request()->routeIs('admin.kalender*') || request()->routeIs('kalender.*')) active @endif">
+            <?php if($canAccessKalender ?? false): ?>
+            <a href="<?php echo e(route('admin.kalender')); ?>" class="sidebar-item <?php if(request()->routeIs('admin.kalender*') || request()->routeIs('kalender.*')): ?> active <?php endif; ?>">
                 <span class="icon">📅</span><span class="text">Kalender Kerja</span>
             </a>
-            @endif
-            <a href="{{ route('pengajuan.index') }}" class="sidebar-item @if(request()->routeIs('pengajuan.*')) active @endif">
+            <?php endif; ?>
+            <a href="<?php echo e(route('pengajuan.index')); ?>" class="sidebar-item <?php if(request()->routeIs('pengajuan.*')): ?> active <?php endif; ?>">
                 <span class="icon">📋</span><span class="text">Pengajuan WFO</span>
             </a>
-            @if($canAccessReport ?? false)
-            <a href="{{ route('report.index') }}" class="sidebar-item @if(request()->routeIs('report.*')) active @endif">
+            <?php if($canAccessReport ?? false): ?>
+            <a href="<?php echo e(route('report.index')); ?>" class="sidebar-item <?php if(request()->routeIs('report.*')): ?> active <?php endif; ?>">
                 <span class="icon">📊</span><span class="text">Report Absensi</span>
             </a>
-            @endif
-            @if($canAccessLaporanMakan ?? false)
-            <a href="{{ route('makan.index') }}" class="sidebar-item @if(request()->routeIs('makan.*')) active @endif">
+            <?php endif; ?>
+            <?php if($canAccessLaporanMakan ?? false): ?>
+            <a href="<?php echo e(route('makan.index')); ?>" class="sidebar-item <?php if(request()->routeIs('makan.*')): ?> active <?php endif; ?>">
                 <span class="icon">🍽️</span><span class="text">Laporan Makan</span>
             </a>
-            @endif
-            @if($canAccessSettings ?? false)
-            <a href="{{ route('settings.index') }}" class="sidebar-item @if(request()->routeIs('settings.*') || request()->routeIs('users.*') || request()->routeIs('biro.*') || request()->routeIs('jabatan.*') || request()->routeIs('role.*')) active @endif">
+            <?php endif; ?>
+            <?php if($canAccessSettings ?? false): ?>
+            <a href="<?php echo e(route('settings.index')); ?>" class="sidebar-item <?php if(request()->routeIs('settings.*') || request()->routeIs('users.*') || request()->routeIs('biro.*') || request()->routeIs('jabatan.*') || request()->routeIs('role.*')): ?> active <?php endif; ?>">
                 <span class="icon">⚙️</span><span class="text">Setting User</span>
             </a>
-            @endif
+            <?php endif; ?>
         </div>
     </div>
     <div class="main" id="mainContent">
-        @yield("content")
+        <?php echo $__env->yieldContent("content"); ?>
     </div>
     <script>
         function toggleProfile() {
@@ -529,8 +529,8 @@
                 }
             }
         });
-        @yield("scripts")
+        <?php echo $__env->yieldContent("scripts"); ?>
     </script>
 </body>
 
-</html>
+</html><?php /**PATH C:\Users\Kevannn\Documents\FILE MAGANG\AbsensiWika\resources\views/layouts/app.blade.php ENDPATH**/ ?>

@@ -1,8 +1,8 @@
-@extends('layouts.app')
 
-@section('title', 'WG Absen — Laporan Absen')
 
-@section('content')
+<?php $__env->startSection('title', 'WG Absen — Laporan Absen'); ?>
+
+<?php $__env->startSection('content'); ?>
 <style>
     .report-container {
         max-width: 100%;
@@ -486,24 +486,24 @@
     <!-- Filter Card -->
     <div class="filter-card">
         <form id="filterForm">
-            @csrf
+            <?php echo csrf_field(); ?>
             <div class="filter-grid">
                 <div class="filter-group">
                     <label class="filter-label">Pegawai</label>
                     <select id="filterPegawai" class="filter-select">
                         <option value="all">-- Semua Pegawai --</option>
-                        @foreach($pegawaiList as $pegawai)
-                            <option value="{{ $pegawai->nip }}">{{ $pegawai->nama }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $pegawaiList; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $pegawai): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($pegawai->nip); ?>"><?php echo e($pegawai->nama); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label class="filter-label">Unit Kerja</label>
                     <select id="filterBiro" class="filter-select">
                         <option value="all">-- Semua Unit Kerja --</option>
-                        @foreach($biroList as $biro)
-                            <option value="{{ $biro->id }}">{{ $biro->biro_name }}</option>
-                        @endforeach
+                        <?php $__currentLoopData = $biroList; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $biro): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($biro->id); ?>"><?php echo e($biro->biro_name); ?></option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -639,7 +639,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showLoading(true);
 
         const formData = new FormData();
-        formData.append('_token', '{{ csrf_token() }}');
+        formData.append('_token', '<?php echo e(csrf_token()); ?>');
         formData.append('nip', nip === 'all' ? '' : nip);
         formData.append('biro_id', biroId === 'all' ? '' : biroId);
         formData.append('fetch_all', (nip === 'all' && biroId === 'all') ? '1' : '0');
@@ -648,7 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('search', searchQuery);
         formData.append('page', currentPage);
 
-        fetch('{{ route("report.getData") }}', {
+        fetch('<?php echo e(route("report.getData")); ?>', {
             method: 'POST',
             body: formData
         })
@@ -844,11 +844,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        fetch('{{ route("report.sendTeguran") }}', {
+        fetch('<?php echo e(route("report.sendTeguran")); ?>', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
             },
             body: JSON.stringify({
                 nip: nip,
@@ -883,11 +883,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        fetch('{{ route("report.sendPeringatan") }}', {
+        fetch('<?php echo e(route("report.sendPeringatan")); ?>', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
             },
             body: JSON.stringify({
                 nip: nip,
@@ -917,11 +917,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = type === 'excel' ? '{{ route("report.exportExcel") }}' : '{{ route("report.exportPdf") }}';
+        form.action = type === 'excel' ? '<?php echo e(route("report.exportExcel")); ?>' : '<?php echo e(route("report.exportPdf")); ?>';
         form.target = type === 'pdf' ? '_blank' : '_self';
 
         const fields = {
-            '_token': '{{ csrf_token() }}',
+            '_token': '<?php echo e(csrf_token()); ?>',
             'nip': nip,
             'biro_id': biroId,
             'tanggal_from': dateFrom,
@@ -942,4 +942,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\Kevannn\Documents\FILE MAGANG\AbsensiWika\resources\views/report/index.blade.php ENDPATH**/ ?>

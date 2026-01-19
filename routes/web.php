@@ -12,6 +12,7 @@ use App\Http\Controllers\MagicLinkController;
 use App\Http\Controllers\AbsenController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\LaporanMakanController;
 
 // Landing page -> tunjukkan login form langsung
 Route::get('/', [AuthController::class, 'showLoginForm']);
@@ -137,4 +138,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/absensi/report/export-pdf', [ReportController::class, 'exportPdf'])->name('report.exportPdf');
     Route::post('/absensi/report/send-teguran', [ReportController::class, 'sendTeguran'])->name('report.sendTeguran');
     Route::post('/absensi/report/send-peringatan', [ReportController::class, 'sendPeringatan'])->name('report.sendPeringatan');
+
+    // Laporan Uang Makan (admin & HC only)
+    Route::get('/makan', [LaporanMakanController::class, 'index'])->name('makan.index');
+    Route::post('/makan/data', [LaporanMakanController::class, 'getData'])->name('makan.getData');
+    Route::post('/makan/detail', [LaporanMakanController::class, 'getDetail'])->name('makan.getDetail');
 });
