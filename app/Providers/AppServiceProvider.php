@@ -46,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
                 $isHC = $biroName && stripos($biroName, 'Human Capital') !== false;
                 
                 // Access flags
-                $canBroadcast = $isAdmin;
+                $canBroadcast = $isAdmin || $isHC; // Admin + HC bisa broadcast
                 $canAccessAllBiro = $isAdmin || $isVP || $isHC;
                 $canAccessKalender = $isAdmin || $isHC;
                 $canAccessReport = $isAdmin || $isHC;

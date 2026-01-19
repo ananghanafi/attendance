@@ -409,9 +409,9 @@
                 <button type="submit" class="btn secondary" style="padding:8px 16px">View</button>
               </form>
               @php
-                // Admin/VP bisa edit kapan saja selama periode aktif
+                // Admin/VP/HC bisa edit kapan saja selama periode aktif
                 // User biasa HANYA bisa edit via magic link (tidak dari halaman ini)
-                $canUserEdit = $p->canEdit && $isAdminOrVP;
+                $canUserEdit = $p->canEdit && ($canEdit ?? false);
               @endphp
               @if($canUserEdit)
               <form action="{{ route('pengajuan.setEdit') }}" method="POST" style="display:inline">

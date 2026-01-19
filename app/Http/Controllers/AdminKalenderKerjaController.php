@@ -11,19 +11,33 @@ use Illuminate\Support\Facades\Log;
 
 class AdminKalenderKerjaController extends Controller
 {
-    private function ensureAdmin(): void
+    private function isHC(): bool
+    {
+        $user = Auth::user();
+        $biroName = DB::table('biro')->where('id', $user->biro_id)->value('biro_name');
+        return stripos($biroName ?? '', 'Human Capital') !== false;
+    }
+
+    private function isAdmin(): bool
     {
         $user = Auth::user();
         $role = DB::table('roles')->where('id', $user->role_id)->value('role_name');
-        // ADMIN VP roles
-        if (!in_array(strtoupper($role ?? ''), ['ADMIN', 'VP'])) {
+        return strtoupper($role ?? '') === 'ADMIN';
+    }
+
+    /**
+     * Pastikan user adalah Admin atau HC (VP tidak bisa akses kalender)
+     */
+    private function ensureAdminOrHC(): void
+    {
+        if (!$this->isAdmin() && !$this->isHC()) {
             abort(403);
         }
     }
 
     public function index(Request $request)
     {
-        $this->ensureAdmin();
+        $this->ensureAdminOrHC();
 
         $page = $request->input('p', session('kalender_page', 1));
         session(['kalender_page' => $page]);
@@ -53,7 +67,7 @@ class AdminKalenderKerjaController extends Controller
 
     public function store(Request $request)
     {
-        $this->ensureAdmin();
+        $this->ensureAdminOrHC();
 
         $data = $request->validate([
             'minggu' => ['required', 'integer', 'min:1', 'max:6'],
@@ -228,14 +242,14 @@ class AdminKalenderKerjaController extends Controller
      */
     public function setEdit(Request $request)
     {
-        $this->ensureAdmin();
+        $this->ensureAdminOrHC();
         session(['kalender_edit_id' => $request->input('id')]);
         return redirect()->route('kalender.edit');
     }
 
     public function edit()
     {
-        $this->ensureAdmin();
+        $this->ensureAdminOrHC();
 
         $id = session('kalender_edit_id');
         if (!$id) {
@@ -249,7 +263,7 @@ class AdminKalenderKerjaController extends Controller
 
     public function update(Request $request)
     {
-        $this->ensureAdmin();
+        $this->ensureAdminOrHC();
 
         $id = session('kalender_edit_id');
         if (!$id) {
@@ -336,7 +350,7 @@ class AdminKalenderKerjaController extends Controller
      */
     public function setDelete(Request $request)
     {
-        $this->ensureAdmin();
+        $this->ensureAdminOrHC();
 
         $id = $request->input('id');
         if (!$id) {
@@ -351,7 +365,7 @@ class AdminKalenderKerjaController extends Controller
 
     public function destroy()
     {
-        $this->ensureAdmin();
+        $this->ensureAdminOrHC();
 
         $id = session('kalender_delete_id');
         if (!$id) {
@@ -398,7 +412,7 @@ class AdminKalenderKerjaController extends Controller
 
     public function liburIndex()
     {
-        $this->ensureAdmin();
+        $this->ensureAdminOrHC();
 
         $libur = DB::table('kalender_libur')
             ->orderBy('tanggal', 'desc')
@@ -415,7 +429,7 @@ class AdminKalenderKerjaController extends Controller
      */
     public function liburStore(Request $request)
     {
-        $this->ensureAdmin();
+        $this->ensureAdminOrHC();
 
         $request->validate([
             'tanggal' => 'required|array|min:1',
@@ -464,7 +478,7 @@ class AdminKalenderKerjaController extends Controller
      */
     public function liburDestroy(int $id)
     {
-        $this->ensureAdmin();
+        $this->ensureAdminOrHC();
 
         $deleted = DB::table('kalender_libur')
             ->where('id', $id)
@@ -488,7 +502,7 @@ class AdminKalenderKerjaController extends Controller
      */
     public function broadcast(Request $request)
     {
-        $this->ensureAdmin();
+        $this->ensureAdminOrHC();
 
         $id = $request->input('id');
         if (!$id) {

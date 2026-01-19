@@ -11,13 +11,31 @@ use Carbon\CarbonPeriod;
 class ReportController extends Controller
 {
     /**
-     * Check if user is admin or VP
+     * Cek apakah user adalah HC (Human Capital Division - by biro_name)
      */
-    private function ensureAdminOrVp(): void
+    private function isHC(): bool
+    {
+        $user = Auth::user();
+        $biroName = DB::table('biro')->where('id', $user->biro_id)->value('biro_name');
+        return $biroName && stripos($biroName, 'Human Capital') !== false;
+    }
+
+    /**
+     * Cek apakah user adalah admin
+     */
+    private function isAdmin(): bool
     {
         $user = Auth::user();
         $role = DB::table('roles')->where('id', $user->role_id)->value('role_name');
-        if (!in_array(strtoupper($role ?? ''), ['ADMIN', 'VP'])) {
+        return strtoupper($role ?? '') === 'ADMIN';
+    }
+
+    /**
+     * Check if user is admin or HC (VP tidak bisa akses report)
+     */
+    private function ensureAdminOrHC(): void
+    {
+        if (!$this->isAdmin() && !$this->isHC()) {
             abort(403, 'Unauthorized');
         }
     }
@@ -27,7 +45,7 @@ class ReportController extends Controller
      */
     public function index(Request $request)
     {
-        $this->ensureAdminOrVp();
+        $this->ensureAdminOrHC();
 
         // Get all pegawai for dropdown
         $pegawaiList = DB::table('users')
@@ -53,7 +71,7 @@ class ReportController extends Controller
      */
     public function getData(Request $request)
     {
-        $this->ensureAdminOrVp();
+        $this->ensureAdminOrHC();
 
         $nip = $request->input('nip');
         $biroId = $request->input('biro_id');
@@ -505,7 +523,7 @@ class ReportController extends Controller
      */
     public function exportExcel(Request $request)
     {
-        $this->ensureAdminOrVp();
+        $this->ensureAdminOrHC();
 
         // Get data same as getData
         $data = $this->getExportData($request);
@@ -525,7 +543,7 @@ class ReportController extends Controller
      */
     public function exportPdf(Request $request)
     {
-        $this->ensureAdminOrVp();
+        $this->ensureAdminOrHC();
 
         // Get data
         $data = $this->getExportData($request);
@@ -648,7 +666,7 @@ class ReportController extends Controller
      */
     public function sendTeguran(Request $request)
     {
-        $this->ensureAdminOrVp();
+        $this->ensureAdminOrHC();
 
         $nip = $request->input('nip');
         $tanggalFrom = $request->input('tanggal_from');
@@ -739,7 +757,7 @@ class ReportController extends Controller
      */
     public function sendPeringatan(Request $request)
     {
-        $this->ensureAdminOrVp();
+        $this->ensureAdminOrHC();
 
         $nip = $request->input('nip');
         $tanggalFrom = $request->input('tanggal_from');

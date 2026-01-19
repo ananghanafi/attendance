@@ -19,17 +19,18 @@ class PengajuanWfoController extends Controller
     }
 
     /**
-     * Cek apakah user adalah admin atau VP
+     * Cek apakah user adalah VP (role VP, tapi bukan HC)
      */
-    private function isAdminOrVP(): bool
+    private function isVP(): bool
     {
         $user = Auth::user();
         $role = DB::table('roles')->where('id', $user->role_id)->value('role_name');
-        return in_array(strtoupper($role ?? ''), ['ADMIN', 'VP']);
+        return strtoupper($role ?? '') === 'VP';
     }
 
     /**
      * Cek apakah user adalah HC (Human Capital Division - by biro_name)
+     * HC prioritas lebih tinggi dari VP role
      */
     private function isHC(): bool
     {
@@ -40,20 +41,27 @@ class PengajuanWfoController extends Controller
 
     /**
      * Cek apakah user dapat mengakses semua biro (Admin, VP, atau HC)
+     * VP hanya bisa lihat semua biro di pengajuan, tidak bisa akses fitur lain
      */
     private function canAccessAllBiro(): bool
     {
-        return $this->isAdminOrVP() || $this->isHC();
+        return $this->isAdmin() || $this->isVP() || $this->isHC();
     }
 
     /**
-     * Pastikan user adalah admin atau VP, jika tidak abort 403
+     * Cek apakah user bisa broadcast (Admin + HC saja, VP tidak bisa)
      */
-    private function ensureAdminOrVP(): void
+    private function canBroadcast(): bool
     {
-        if (!$this->isAdminOrVP()) {
-            abort(403);
-        }
+        return $this->isAdmin() || $this->isHC();
+    }
+
+    /**
+     * Cek apakah user bisa edit pengajuan (Admin, VP, atau HC)
+     */
+    private function canEditPengajuan(): bool
+    {
+        return $this->canAccessAllBiro();
     }
 
     /**
@@ -87,8 +95,8 @@ class PengajuanWfoController extends Controller
     {
         $user = Auth::user();
         $canAccessAllBiro = $this->canAccessAllBiro();
-        $canBroadcast = $this->isAdmin(); // Hanya admin bisa broadcast
-        $isAdminOrVP = $this->isAdminOrVP(); // Untuk edit akses
+        $canBroadcast = $this->canBroadcast(); // Admin + HC bisa broadcast
+        $canEdit = $this->canEditPengajuan(); // Admin, VP, HC bisa edit
 
         // Filter parameters
         $search = $request->query('search', '');
@@ -278,7 +286,7 @@ class PengajuanWfoController extends Controller
                 'bulan' => $bulan,
                 'tahun' => $tahun,
             ],
-            'isAdminOrVP' => $isAdminOrVP,
+            'canEdit' => $canEdit,
             'canBroadcast' => $canBroadcast,
             'canAccessAllBiro' => $canAccessAllBiro,
             'allEligibleIds' => $allEligibleIds,
@@ -391,7 +399,7 @@ class PengajuanWfoController extends Controller
             'details' => $details,
             'readOnly' => true, // View mode - radio buttons disabled
             'hariLibur' => $hariLibur, // Array hari yang libur: ['senin' => true, 'selasa' => false, ...]
-            'isAdminOrVP' => $this->isAdminOrVP(),
+            'canEdit' => $this->canEditPengajuan(),
         ]);
     }
 
@@ -420,8 +428,8 @@ class PengajuanWfoController extends Controller
             return redirect()->route('pengajuan.index')->with('error', 'Periode pengajuan ini sudah tidak dapat diedit. Hanya pengajuan dalam rentang tanggal aktif yang dapat diedit.');
         }
 
-        // Admin/VP bisa edit kapan saja
-        if ($this->isAdminOrVP()) {
+        // Admin/VP/HC bisa edit kapan saja
+        if ($this->canEditPengajuan()) {
             session(['pengajuan_id' => $id]);
             return redirect()->route('pengajuan.edit');
         }
@@ -481,10 +489,10 @@ class PengajuanWfoController extends Controller
 
         // Cek akses
         $user = Auth::user();
-        $isAdminOrVP = $this->isAdminOrVP();
+        $canEdit = $this->canEditPengajuan();
         
-        // Jika bukan admin/VP
-        if (!$isAdminOrVP) {
+        // Jika bukan admin/VP/HC
+        if (!$canEdit) {
             // HARUS punya magic_token_id di session (login via link broadcast)
             if (!session('magic_token_id')) {
                 return redirect()->route('pengajuan.index')->with('error', 'Anda tidak memiliki akses untuk mengedit pengajuan ini. Silakan gunakan link yang dikirim via WhatsApp.');
@@ -563,13 +571,13 @@ class PengajuanWfoController extends Controller
             'details' => $details,
             'readOnly' => false,
             'hariLibur' => $hariLibur, // Array hari yang libur: ['senin' => true, 'selasa' => false, ...]
-            'isAdminOrVP' => $this->isAdminOrVP(),
+            'canEdit' => $this->canEditPengajuan(),
         ]);
     }
 
     /**
      * Update pengajuan WFO/WFA per pegawai
-     * Admin/VP atau user dengan akses bisa update
+     * Admin/VP/HC atau user dengan akses bisa update
      * 
      * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
@@ -601,15 +609,15 @@ class PengajuanWfoController extends Controller
 
             // Cek akses
             $user = Auth::user();
-            $isAdminOrVP = $this->isAdminOrVP();
+            $canEdit = $this->canEditPengajuan();
             
-            // Jika bukan admin/VP, cek apakah dari biro yang sama
-            if (!$isAdminOrVP && $pengajuan->biro_id !== $user->biro_id) {
+            // Jika bukan admin/VP/HC, cek apakah dari biro yang sama
+            if (!$canEdit && $pengajuan->biro_id !== $user->biro_id) {
                 abort(403);
             }
 
-            // Jika bukan admin/VP dan status sudah final, tolak update
-            if (!$isAdminOrVP && strtolower($pengajuan->status ?? '') === 'final') {
+            // Jika bukan admin/VP/HC dan status sudah final, tolak update
+            if (!$canEdit && strtolower($pengajuan->status ?? '') === 'final') {
                 return redirect()->route('pengajuan.show')->with('error', 'Pengajuan ini sudah disimpan permanen dan tidak dapat diedit lagi.');
             }
 
@@ -782,13 +790,13 @@ class PengajuanWfoController extends Controller
 
             // Cek akses
             $user = Auth::user();
-            $isAdminOrVP = $this->isAdminOrVP();
+            $canEdit = $this->canEditPengajuan();
             
-            if (!$isAdminOrVP && $pengajuan->biro_id !== $user->biro_id) {
+            if (!$canEdit && $pengajuan->biro_id !== $user->biro_id) {
                 return response()->json(['success' => false, 'message' => 'Akses ditolak'], 403);
             }
 
-            if (!$isAdminOrVP && strtolower($pengajuan->status ?? '') === 'final') {
+            if (!$canEdit && strtolower($pengajuan->status ?? '') === 'final') {
                 return response()->json(['success' => false, 'message' => 'Pengajuan sudah final'], 403);
             }
 
@@ -956,10 +964,13 @@ class PengajuanWfoController extends Controller
 
     /**
      * Broadcast ulang notifikasi WhatsApp ke biro tertentu
+     * Hanya Admin + HC yang bisa broadcast
      */
     public function broadcast(Request $request)
     {
-        $this->ensureAdminOrVP();
+        if (!$this->canBroadcast()) {
+            abort(403);
+        }
 
         $id = $request->input('id');
         if (!$id) {
@@ -989,10 +1000,13 @@ class PengajuanWfoController extends Controller
 
     /**
      * Broadcast notifikasi WhatsApp ke multiple biro sekaligus
+     * Hanya Admin + HC yang bisa broadcast
      */
     public function broadcastMultiple(Request $request)
     {
-        $this->ensureAdminOrVP();
+        if (!$this->canBroadcast()) {
+            abort(403);
+        }
 
         $ids = $request->input('ids', []);
         
