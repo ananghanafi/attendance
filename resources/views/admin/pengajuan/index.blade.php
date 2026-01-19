@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Pengajuan Pegawai WFO')
+@section('title', 'WG Absen — Pengajuan WFO')
 
 @section('styles')
 <style>

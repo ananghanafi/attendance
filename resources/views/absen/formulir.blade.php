@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $tipe === 'masuk' ? 'Absen Masuk' : 'Absen Pulang')
+@section('title', $tipe === 'masuk' ? 'WG Absen — Absen Masuk' : 'WG Absen — Absen Pulang')
 
 @section('styles')
 <style>

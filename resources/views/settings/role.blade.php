@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Setting Role')
+@section('title', 'WG Absen — Setting Role')
 
 @section('styles')
   .content-header {

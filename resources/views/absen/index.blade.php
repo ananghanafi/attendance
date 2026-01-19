@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Absen')
+@section('title', 'WG Absen — Absen')
 
 @section('styles')
 <style>
